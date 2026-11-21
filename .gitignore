@@ -9,3 +9,5 @@ logs/*.log
 .config.local.php
 *.swp
 .DS_Store
+__pycache__/
+*.pyc
