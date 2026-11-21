@@ -1,0 +1,168 @@
+:root {
+  --fond: #f6f3ec;
+  --carte: #ffffff;
+  --texte: #2b2620;
+  --doux: #6b6257;
+  --accent: #8a4b1f;
+  --accent-fonce: #6d3a16;
+  --bord: #e3dccd;
+  --ok: #2e7d32;
+  --danger: #b3261e;
+  --rayon: 10px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  line-height: 1.55;
+}
+.barre {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  background: var(--accent-fonce); color: #fff;
+  padding: .7rem 1.2rem;
+}
+.barre .marque { font-weight: 700; font-size: 1.15rem; color: #fff; text-decoration: none; }
+.menu { display: flex; gap: .4rem; flex-wrap: wrap; }
+.menu a { color: #f3e7dc; text-decoration: none; padding: .35rem .7rem; border-radius: 6px; }
+.menu a:hover { background: rgba(255,255,255,.15); }
+.menu a.actif { background: #fff; color: var(--accent-fonce); font-weight: 600; }
+.barre.publique { justify-content: space-between; }
+.badge-partage { background: rgba(255,255,255,.2); padding: .2rem .6rem; border-radius: 999px; font-size: .85rem; }
+
+.contenu { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+.contenu.large { max-width: 860px; }
+.pied { text-align: center; color: var(--doux); font-size: .85rem; padding: 2rem 1rem; }
+
+h1 { font-size: 1.6rem; margin: .2rem 0 1rem; }
+h2 { font-size: 1.2rem; margin: 1.4rem 0 .6rem; }
+
+.entete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.stats { display: flex; gap: .8rem; flex-wrap: wrap; }
+.stat { background: var(--carte); border: 1px solid var(--bord); border-radius: 999px; padding: .2rem .8rem; font-size: .9rem; }
+.stat strong { font-size: 1.05rem; }
+
+.filtres { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0 1.4rem; }
+.filtres input[type="search"] { flex: 1 1 240px; }
+input, select, textarea {
+  font: inherit; padding: .5rem .65rem;
+  border: 1px solid var(--bord); border-radius: 8px; background: #fff; color: var(--texte);
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(138,75,31,.35); border-color: var(--accent); }
+
+.bouton {
+  display: inline-block; border: 0; cursor: pointer;
+  background: var(--accent); color: #fff; text-decoration: none;
+  padding: .55rem 1rem; border-radius: 8px; font-weight: 600;
+}
+.bouton:hover { background: var(--accent-fonce); }
+.bouton.secondaire { background: #fff; color: var(--accent-fonce); border: 1px solid var(--accent); }
+.bouton.secondaire:hover { background: #f7ece2; }
+.bouton.danger { background: var(--danger); }
+.bouton.petit { padding: .3rem .6rem; font-size: .85rem; font-weight: 500; }
+
+.grille {
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+.carte {
+  background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon);
+  overflow: hidden; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.carte:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(60,40,20,.15); }
+.couverture { display: block; aspect-ratio: 2/3; background: #ece5d8; }
+.couverture img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.couverture-vide { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 2.4rem; }
+.couverture-vide.grande { aspect-ratio: 2/3; border-radius: var(--rayon); border: 1px solid var(--bord); }
+.infos { padding: .6rem .7rem .8rem; display: flex; flex-direction: column; gap: .25rem; }
+.titre { font-weight: 650; font-size: .95rem; line-height: 1.25; }
+.auteurs { color: var(--doux); font-size: .85rem; }
+.ligne-badges { display: flex; align-items: center; gap: .5rem; }
+
+.badge { border-radius: 999px; padding: .1rem .55rem; font-size: .78rem; font-weight: 600; background: #eee; }
+.statut-a_lire { background: #e3ecfb; color: #2b4f8a; }
+.statut-en_cours { background: #fdf3d7; color: #8a6d1a; }
+.statut-lu { background: #e2f3e5; color: var(--ok); }
+.statut-abandonne { background: #f6e2e0; color: var(--danger); }
+.badge.public { background: #e2f3e5; color: var(--ok); text-decoration: none; }
+.badge.prive { background: #eee; color: var(--doux); }
+.note { color: #c98a12; letter-spacing: .05em; }
+
+.tags { display: flex; flex-wrap: wrap; gap: .25rem; }
+.tag { background: #f0e9dc; border-radius: 999px; padding: .05rem .5rem; font-size: .78rem; color: var(--doux); }
+
+.vide { text-align: center; background: var(--carte); border: 1px dashed var(--bord); border-radius: var(--rayon); padding: 2.5rem 1rem; }
+.vide-petit { color: var(--doux); }
+
+.detail { display: grid; grid-template-columns: 220px 1fr 280px; gap: 1.4rem; background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1.4rem; }
+.detail-couverture img { width: 100%; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.detail-infos .auteurs { font-size: 1.05rem; margin-top: -.4rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem 1rem; margin: 1rem 0; }
+.meta div { display: flex; gap: .4rem; }
+.meta dt { font-weight: 600; color: var(--doux); min-width: 70px; }
+.meta dd { margin: 0; }
+.description summary { cursor: pointer; color: var(--accent); }
+.sujets { margin-top: .6rem; }
+.detail-perso { border-left: 1px solid var(--bord); padding-left: 1.2rem; }
+.commentaire { border-left: 3px solid var(--accent); margin: .8rem 0; padding: .4rem .8rem; background: #faf6ef; border-radius: 0 8px 8px 0; white-space: pre-wrap; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+.actions form { display: inline; }
+
+.fiches { margin-top: 2rem; }
+.fiche { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1.1rem 1.3rem; margin-bottom: 1rem; }
+.fiche header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.fiche h3 { margin: 0; font-size: 1.1rem; }
+.fiche-badges { display: flex; gap: .5rem; align-items: center; }
+.fiche-contenu { margin: .7rem 0; }
+.fiche-contenu blockquote, .citations blockquote {
+  margin: .5rem 0; padding: .4rem .9rem; border-left: 3px solid var(--accent);
+  background: #faf6ef; border-radius: 0 8px 8px 0; font-style: italic;
+}
+.fiche-contenu ul { padding-left: 1.3rem; }
+.fiche-pied { color: var(--doux); font-size: .82rem; margin: .4rem 0 0; }
+
+.fiche.publique { max-width: 760px; margin: 0 auto; }
+.fiche-entete { display: flex; gap: 1.2rem; align-items: flex-start; }
+.fiche-couverture { width: 130px; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.fiche-livre { color: var(--doux); margin: .2rem 0; }
+.fiche-meta { color: var(--doux); font-size: .85rem; }
+
+.liste-partages { list-style: none; padding: 0; }
+.liste-partages li { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: .8rem 1rem; margin-bottom: .7rem; }
+.partage-livre { color: var(--doux); }
+.partage-actions { display: flex; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
+.lien-partage { flex: 1 1 260px; font-size: .85rem; color: var(--doux); }
+
+.formulaire { max-width: 760px; background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1.3rem 1.5rem; }
+.champ { margin-bottom: .9rem; display: flex; flex-direction: column; gap: .3rem; }
+.champ label { font-weight: 600; font-size: .92rem; }
+.champ-ligne { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; }
+.champ.case { justify-content: flex-end; }
+.champ.case label { font-weight: 500; }
+.aide { color: var(--doux); font-size: .85rem; margin: .3rem 0 0; }
+.alertes { background: #fdecea; border: 1px solid #f5c6c0; color: var(--danger); border-radius: 8px; padding: .6rem 1rem; margin-bottom: 1rem; }
+.alertes.ok { background: #e9f6ea; border-color: #bfe3c2; color: var(--ok); }
+
+.isbn-box { background: #fdf8ef; border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1rem 1.2rem; margin-bottom: 1.2rem; max-width: 760px; }
+.isbn-box label { font-weight: 700; }
+.isbn-ligne { display: flex; gap: .5rem; margin-top: .5rem; }
+.isbn-ligne input { flex: 1; }
+.isbn-apercu { display: flex; gap: .9rem; margin-top: .8rem; align-items: center; }
+.isbn-apercu img { width: 70px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.import-aide { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1rem 1.3rem; margin-bottom: 1.2rem; }
+.import-aide pre { background: #2b2620; color: #f3e7dc; padding: .6rem .8rem; border-radius: 8px; overflow-x: auto; }
+.erreur { text-align: center; padding-top: 4rem; }
+.erreur h1 { font-size: 3rem; margin-bottom: .3rem; }
+
+@media (max-width: 900px) {
+  .detail { grid-template-columns: 150px 1fr; }
+  .detail-perso { grid-column: 1 / -1; border-left: 0; padding-left: 0; border-top: 1px solid var(--bord); padding-top: 1rem; }
+}
+@media (max-width: 560px) {
+  .detail { grid-template-columns: 1fr; }
+  .fiche-entete { flex-direction: column; }
+}

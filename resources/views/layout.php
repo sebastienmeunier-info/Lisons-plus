@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?= e($titre_page ?? ($config['app_name'] ?? 'Lisons-plus')) ?> — <?= e($config['app_name']) ?></title>
+<link rel="stylesheet" href="<?= url('/public/css/style.css') ?>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+<header class="barre">
+  <a class="marque" href="<?= url('/') ?>">📚 <?= e($config['app_name']) ?></a>
+  <nav class="menu">
+    <a href="<?= url('/') ?>" class="<?= ($page ?? '') === 'accueil' ? 'actif' : '' ?>">Ma bibliothèque</a>
+    <a href="<?= url('/livres/nouveau') ?>" class="<?= ($page ?? '') === 'nouveau' ? 'actif' : '' ?>">+ Ajouter</a>
+    <a href="<?= url('/partages') ?>" class="<?= ($page ?? '') === 'partages' ? 'actif' : '' ?>">Fiches partagées</a>
+    <a href="<?= url('/import') ?>" class="<?= ($page ?? '') === 'import' ? 'actif' : '' ?>">Import</a>
+  </nav>
+</header>
+<main class="contenu">
+<?= $content ?>
+</main>
+<footer class="pied">
+  <?= e($config['app_name']) ?> — bibliothèque personnelle &amp; fiches de lecture partagées · données stockées localement (JSON)
+</footer>
+<script src="<?= url('/public/js/app.js') ?>"></script>
+</body>
+</html>

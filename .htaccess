@@ -1,0 +1,8 @@
+# Lisons-plus — réécriture Apache : tout passe par index.php sauf les fichiers existants
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# Protection des dossiers sensibles
+RedirectMatch 404 ^/(data|logs|config|app)/

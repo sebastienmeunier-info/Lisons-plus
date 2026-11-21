@@ -1,0 +1,11 @@
+# Données personnelles (non versionnées)
+data/*.json
+data/import-*.json
+uploads/covers/*
+!uploads/covers/.gitkeep
+logs/*.log
+
+# Fichiers locaux
+.config.local.php
+*.swp
+.DS_Store
