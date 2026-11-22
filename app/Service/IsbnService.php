@@ -227,7 +227,10 @@ class IsbnService
      */
     public function couvertureUrlIsbn(string $isbn, string $size = 'L'): string
     {
-        return rtrim($this->config['isbn']['covers_base'], '/') . '/b/isbn/' . $isbn . '-' . $size . '.jpg?default=false';
+        // covers_base pointe sur /b/id : la variante par ISBN vit sur /b/isbn
+        // (même CDN, racine http(s)://covers.openlibrary.org).
+        $host = rtrim((string) preg_replace('#/b/id$#i', '', (string) $this->config['isbn']['covers_base']), '/');
+        return $host . '/b/isbn/' . $isbn . '-' . $size . '.jpg?default=false';
     }
 
     /**

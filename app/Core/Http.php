@@ -23,6 +23,12 @@ class Http
         return function_exists('curl_init') ? 'curl' : (ini_get('allow_url_fopen') ? 'stream' : 'socket');
     }
 
+    /** Transport effectivement utilisé (diagnostic). */
+    public static function transportActuel(): string
+    {
+        return self::transport();
+    }
+
     /** GET une URL → corps de la réponse, ou null si erreur réseau / HTTP >= 400. */
     public static function get(string $url, int $timeout = 20, string $userAgent = 'Lisons-plus/1.0'): ?string
     {
