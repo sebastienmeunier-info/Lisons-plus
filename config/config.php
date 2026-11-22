@@ -7,6 +7,21 @@
 
 $root = dirname(__DIR__);
 
+/*
+ * Dossier des données (JSON + sessions). Ordre de priorité :
+ *  1. LISONS_DATA_DIR (variable d'environnement, conf serveur) ;
+ *  2. ../lisons-data/ à côté du projet, s'il existe et est writable par PHP
+ *     → permet de sortir data/ du webroot par simple upload FTP, sans conf ;
+ *  3. data/ dans le projet (défaut, dev local).
+ */
+$dataDir = getenv('LISONS_DATA_DIR') ?: '';
+if ($dataDir === '' && is_dir($root . '/../lisons-data') && is_writable($root . '/../lisons-data')) {
+    $dataDir = $root . '/../lisons-data';
+}
+if ($dataDir === '') {
+    $dataDir = $root . '/data';
+}
+
 return [
     'app_name'    => getenv('LISONS_APP_NAME') ?: 'Lisons-plus',
     'base_url'    => rtrim(getenv('LISONS_BASE_URL') ?: '', '/'), // ex: https://livres.example.tld ; vide = détection auto
@@ -16,9 +31,9 @@ return [
     'paths' => [
         'root'   => $root,
         // data/ et logs/ contiennent des données personnelles : en production,
-        // les déplacer HORS du webroot via LISONS_DATA_DIR / LISONS_LOGS_DIR
-        // (ex. /home/seb/lisons-data) ou bloquer ^/(data|logs|config|app)/ côté serveur.
-        'data'   => getenv('LISONS_DATA_DIR') ?: $root . '/data',
+        // les déplacer HORS du webroot (LISONS_DATA_DIR, ou ../lisons-data détecté
+        // auto) ou bloquer ^/(data|logs|config|app)/ côté serveur web.
+        'data'   => $dataDir,
         'logs'   => getenv('LISONS_LOGS_DIR') ?: $root . '/logs',
         'uploads'=> $root . '/uploads', // servi publiquement (couvertures)
         'views'  => $root . '/resources/views',
@@ -44,11 +59,11 @@ return [
      * PHP locales, 3 niveaux hiérarchiques).
      * ===================================================================== */
     'auth' => [
-        'users_file'  => (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/utilisateurs.json',
-        'password_resets_file' => (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/reinitialisations.json',
+        'users_file'  => $dataDir . '/utilisateurs.json',
+        'password_resets_file' => $dataDir . '/reinitialisations.json',
         // Sessions PHP stockées localement (hébergement mutualisé multi-serveurs :
         // le répertoire par défaut n'est pas partagé entre serveurs).
-        'sessions_path' => getenv('LISONS_SESSIONS_PATH') ?: (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/sessions',
+        'sessions_path' => getenv('LISONS_SESSIONS_PATH') ?: $dataDir . '/sessions',
         'session_key'   => 'lisons_user_id',
         // E-mails promus administrateur / super-administrateur.
         'bootstrap_admin_email' => strtolower((string) (getenv('LISONS_BOOTSTRAP_ADMIN_EMAIL') ?: '')),

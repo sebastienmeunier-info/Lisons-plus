@@ -93,7 +93,27 @@ Centralisée dans `config/config.php`, surchargeable par environnement :
 | `LISONS_ADMINISTRATOR_EMAILS` | Liste d'e-mails promus administrateurs (séparés par des virgules) |
 | `LISONS_VALIDATION_INSCRIPTION_OBLIGATOIRE` | `1` = les nouvelles inscriptions exigent une validation admin |
 
-## 4. Test local
+## 4. Déploiement par FTP/SFTP (auto-hébergement, sans accès à la conf serveur)
+
+Si le site est servi en sous-dossier (ex. `https://apps.example.tld/lisons/`) et que l'accès
+se fait uniquement par FTP/SFTP (FileZilla, port 21 FTP ou 22 SFTP) :
+
+1. **Uploader** le contenu du dépôt vers le dossier servi (ex. `/lisons/`).
+2. **Exclure du transfert** : `.git/`, `data/`, `logs/`, `uploads/covers/` — ne pas écraser
+   les données, sessions et couvertures déjà présentes sur le serveur.
+3. **Fichiers cachés** : menu *Serveur → Forcer l'affichage des fichiers cachés* pour
+   transférer `.htaccess` (utile sous Apache, inoffensif sous nginx).
+4. **Droits** : `data/`, `logs/`, `uploads/` doivent être writables par PHP
+   (clic droit → droits du fichier → 777 si nécessaire).
+5. **Protéger les données sans toucher à nginx** : créer un dossier `lisons-data/`
+   **à côté** du dossier de l'app (hors du DocumentRoot, ex. `../lisons-data/`),
+   y déplacer les `*.json` de `data/` et le dossier `sessions/`.
+   L'application le détecte **automatiquement** (voir `config/config.php`) :
+   `data/` n'est alors plus accessible en HTTP. Alternative si accès à la conf :
+   `location ~ ^/lisons/(data|logs|config|app)/ { deny all; }`.
+6. Vider `data/sessions/` côté serveur en cas de problème de session.
+
+## 5. Test local
 
 ```bash
 php -S 127.0.0.1:8080 dev-router.php     # http://127.0.0.1:8080
@@ -101,21 +121,21 @@ php -S 127.0.0.1:8080 dev-router.php     # http://127.0.0.1:8080
 
 Premier compte créé sur une instance vide = **super-administrateur**.
 
-## 5. Comptes et rôles (comme Plantons-plus)
+## 6. Comptes et rôles (comme Plantons-plus)
 
 - Rôles hiérarchiques : `contributeur` < `administrateur` < `super_administrateur`.
 - Règles : un administrateur gère les contributeurs (promotion/rétrogradation) ; un super-administrateur gère aussi les administrateurs ; le rôle super-administrateur est intangible et non supprimable.
 - Inscription avec mot de passe de 12 caractères min., hachage `password_hash`, session PHP locale, **CSRF** sur tous les POST.
 - Mot de passe oublié : jeton hashé valable 1 h dans `data/reinitialisations.json` ; sans SMTP configuré, le lien est écrit dans `logs/app.log` (et affiché si `LISONS_DEBUG=1`).
 
-## 6. Import Calibre
+## 7. Import Calibre
 
 ```bash
 python3 scripts/calibre_to_json.py "/chemin/Bibliothèque calibre/metadata.db" data/import-calibre.json
 ```
 Puis envoyer le fichier via la page **Import** (connecté). Les doublons d'ISBN de votre bibliothèque sont ignorés.
 
-## 7. Sauvegarde
+## 8. Sauvegarde
 
 ```bash
 tar czf lisons-plus-backup.tar.gz data uploads
