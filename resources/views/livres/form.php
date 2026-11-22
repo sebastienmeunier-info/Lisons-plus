@@ -34,7 +34,15 @@
 <hr>
 <?php endif; ?>
 
-<form method="post" action="<?= e($action) ?>" class="formulaire">
+<?php
+// L'ISBN saisi est aussi passé dans l'URL du formulaire : même si le champ
+// est perdu à la soumission, la création peut télécharger la couverture.
+$actionForm = $action;
+if (empty($edition) && (string) ($isbn_saisie ?? '') !== '') {
+    $actionForm = url('/livres?isbn=' . rawurlencode((string) $isbn_saisie));
+}
+?>
+<form method="post" action="<?= e($actionForm) ?>" class="formulaire">
   <?= csrf_field() ?>
   <?php if ($edition): ?>
     <input type="hidden" name="isbn" value="<?= e($livre['isbn'] ?? '') ?>">

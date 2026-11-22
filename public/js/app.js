@@ -161,6 +161,22 @@
     modal.addEventListener('click', function (e) { if (e.target === modal) arreterScan(); });
   }
 
+  // --- ISBN transmis dans l'URL du formulaire à la soumission ---
+  // (le bouton « Ajouter à ma bibliothèque » soumet ce formulaire : l'ISBN
+  //  courant y est ajouté, pour que la couverture soit téléchargée même si
+  //  le champ isbn disparaissait du POST)
+  var formLivre = document.querySelector('form.formulaire');
+  var champIsbn = formLivre ? formLivre.querySelector('input[name="isbn"]') : null;
+  if (formLivre && champIsbn) {
+    formLivre.addEventListener('submit', function () {
+      var v = champIsbn.value.trim();
+      if (!v) return;
+      var a = formLivre.getAttribute('action') || '';
+      a = a.replace(/([?&])isbn=[^&]*/, '$1').replace(/[?&]$/, '');
+      formLivre.setAttribute('action', a + (a.indexOf('?') >= 0 ? '&' : '?') + 'isbn=' + encodeURIComponent(v));
+    });
+  }
+
   // --- Boutons « copier le lien » ---
   document.querySelectorAll('.copier-lien').forEach(function (b) {
     b.addEventListener('click', function () {
