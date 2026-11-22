@@ -271,20 +271,31 @@ class IsbnService
     {
         $cfg = $this->config['upload'];
         $dir = $this->config['paths']['uploads'] . '/' . $cfg['covers_dir'];
-        if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+            \App\Core\App::get()->log('telechargerCouverture: impossible de créer ' . $dir);
+            return null;
         }
-        $tmp = tempnam(sys_get_temp_dir(), 'cover');
+        if (!is_writable($dir)) {
+            \App\Core\App::get()->log('telechargerCouverture: dossier non inscriptible ' . $dir);
+            return null;
+        }
+        // Fichier temporaire DANS le dossier cible (même filesystem, mêmes droits)
+        // : on ne dépend pas de sys_get_temp_dir() (/tmp peut être restreint).
+        $tmp = tempnam($dir, '.dl');
+        if ($tmp === false) {
+            $tmp = $dir . '/.dl' . bin2hex(random_bytes(8));
+        }
         $ok = $this->httpDownload($urlDest, $tmp);
-        if (!$ok || filesize($tmp) < 2000) { // moins de 2 ko = probablement une image d'erreur
+        if (!$ok || !is_file($tmp) || filesize($tmp) < 2000) { // < 2 ko = image d'erreur
             @unlink($tmp);
             return null;
         }
-        $ext = 'jpg';
-        $dest = $dir . '/' . bin2hex(random_bytes(8)) . '.' . $ext;
-        rename($tmp, $dest);
-        // tempnam() crée en 0600 : illisible pour le serveur web (nginx/FPM
-        // différents) → 403. On rend le fichier lisible par tous.
+        $dest = $dir . '/' . bin2hex(random_bytes(8)) . '.jpg';
+        if (!@rename($tmp, $dest)) {
+            @unlink($tmp);
+            return null;
+        }
+        // créé en 0600 : illisible pour le serveur web (nginx/FPM différents) → 403
         @chmod($dest, 0644);
         @chmod($dir, 0775);
         return 'uploads/' . $cfg['covers_dir'] . '/' . basename($dest);
