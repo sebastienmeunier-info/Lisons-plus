@@ -131,72 +131,11 @@ class LivreController
     }
 
     /**
-     * Tente de récupérer la couverture d'un livre via Open Library.
-     * Met à jour $livre (couverture, couverture_url, isbn) et sauvegarde si $save.
-     * @return string|null message de succès, ou null si rien n'a pu être fait
+     * Délègue à IsbnService::reparer() (logique partagée avec l'accueil).
      */
     private function reparerCouverture(array &$livre, string $isbnSaisi, bool $save, ?array $meta = null): ?string
     {
-        $app = App::get();
-        $isbn = \App\Model\Livre::nettoyerIsbn($isbnSaisi !== '' ? $isbnSaisi : (string) ($livre['isbn'] ?? ''));
-        if ($isbn === '') {
-            return null;
-        }
-        if (($livre['isbn'] ?? '') === '') {
-            $livre['isbn'] = $isbn;
-        }
-        // 1) Tentative RAPIDE : CDN des couvertures directement par ISBN
-        //    (1 appel, 404 propre si aucune couverture — ?default=false)
-        $cdnUrl = $this->isbn()->couvertureUrlIsbn($isbn);
-        try {
-            $path = $this->isbn()->telechargerCouverture($cdnUrl);
-        } catch (\Throwable $e) {
-            $app->log('reparerCouverture CDN : ' . $e->getMessage());
-            $path = null;
-        }
-        if ($path) {
-            $livre['couverture'] = $path;
-            $livre['couverture_url'] = str_replace('?default=false', '', $cdnUrl);
-            if ($save) {
-                $app->store('livres')->save($livre['id'], $livre);
-            }
-            return 'Couverture récupérée.';
-        }
-        // 2) Repli : métadonnées complètes (cachées 7 j) + couverture par id
-        if ($meta === null) {
-            try {
-                $meta = $this->isbn()->lookup($isbn);
-            } catch (\Throwable $e) {
-                $app->log('reparerCouverture ' . $isbn . ' : ' . $e->getMessage());
-                return null;
-            }
-        }
-        if (!is_array($meta)) {
-            return null;
-        }
-        $coverUrl = !empty($meta['couverture_id'])
-            ? $this->isbn()->couvertureUrl((int) $meta['couverture_id'])
-            : null;
-        if ($coverUrl === null) {
-            return null; // métadonnées trouvées mais vraiment aucune couverture
-        }
-        if (empty($livre['couverture_url'])) {
-            $livre['couverture_url'] = $coverUrl;
-        }
-        try {
-            $path = $this->isbn()->telechargerCouverture($coverUrl);
-            if ($path) {
-                $livre['couverture'] = $path;
-            }
-        } catch (\Throwable $e) {
-            $app->log('reparerCouverture download : ' . $e->getMessage());
-        }
-        if ($save) {
-            $app->store('livres')->save($livre['id'], $livre);
-        }
-        return $path
-            ? 'Couverture récupérée pour « ' . ($meta['titre'] ?? $isbn) . ' ».'
-            : 'Métadonnées trouvées, couverture affichée via le lien distant.';
+        return $this->isbn()->reparer($livre, $isbnSaisi, $save, $meta);
     }
 
     public function editer(Request $req, array $params): Response

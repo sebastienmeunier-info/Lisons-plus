@@ -42,6 +42,26 @@ class HomeController
         $tri = (string) $req->input('tri', 'ajout');
 
         $perso = $store->query(fn ($l) => ($l['user_id'] ?? '') === $user['id']);
+
+        // Auto-réparation des couvertures : fichier local manquant + ISBN connu
+        // → téléchargement local (max 5 par chargement, puis cache 7 j).
+        $root = rtrim((string) $app->config()['paths']['root'], '/');
+        $nbReparations = 0;
+        foreach ($perso as $id => $l) {
+            if ($nbReparations >= 5) {
+                break;
+            }
+            $couv = trim((string) ($l['couverture'] ?? ''));
+            $localOk = $couv !== '' && is_file($root . '/' . $couv);
+            if (!$localOk && trim((string) ($l['isbn'] ?? '')) !== '') {
+                $livre = $l;
+                $app->service('isbn', fn ($a) => new \App\Service\IsbnService($a->config()))
+                    ->reparer($livre, (string) $l['isbn'], true);
+                $perso[$id] = $livre;
+                $nbReparations++;
+            }
+        }
+
         $livres = $q !== '' ? array_intersect_key($store->search($q, Livre::champsRecherche()), $perso) : $perso;
 
         $livres = array_filter($livres, function (array $l) use ($statut, $tag): bool {

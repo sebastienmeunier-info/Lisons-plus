@@ -188,6 +188,76 @@ class IsbnService
     }
 
     /**
+     * Répare la couverture d'un livre : télécharge le fichier local
+     * (CDN par ISBN d'abord, sinon id de couverture des métadonnées).
+     * Met à jour $livre (couverture, couverture_url, isbn) et sauvegarde si $save.
+     * @return string|null message de succès, ou null si rien n'a pu être fait
+     */
+    public function reparer(array &$livre, string $isbnSaisi = '', bool $save = true, ?array $meta = null): ?string
+    {
+        $app = \App\Core\App::get();
+        $isbn = \App\Model\Livre::nettoyerIsbn($isbnSaisi !== '' ? $isbnSaisi : (string) ($livre['isbn'] ?? ''));
+        if ($isbn === '') {
+            return null;
+        }
+        if (($livre['isbn'] ?? '') === '') {
+            $livre['isbn'] = $isbn;
+        }
+        // 1) Tentative RAPIDE : CDN des couvertures directement par ISBN
+        //    (1 appel, 404 propre si aucune couverture — ?default=false)
+        $cdnUrl = $this->couvertureUrlIsbn($isbn);
+        try {
+            $path = $this->telechargerCouverture($cdnUrl);
+        } catch (\Throwable $e) {
+            $app->log('reparer CDN : ' . $e->getMessage());
+            $path = null;
+        }
+        if ($path) {
+            $livre['couverture'] = $path;
+            $livre['couverture_url'] = str_replace('?default=false', '', $cdnUrl);
+            if ($save && !empty($livre['id'])) {
+                $app->store('livres')->save($livre['id'], $livre);
+            }
+            return 'Couverture récupérée.';
+        }
+        // 2) Repli : métadonnées (cachées 7 j) + couverture par id
+        if ($meta === null) {
+            try {
+                $meta = $this->lookup($isbn);
+            } catch (\Throwable $e) {
+                $app->log('reparer lookup ' . $isbn . ' : ' . $e->getMessage());
+                return null;
+            }
+        }
+        if (!is_array($meta)) {
+            return null;
+        }
+        $coverUrl = !empty($meta['couverture_id'])
+            ? $this->couvertureUrl((int) $meta['couverture_id'])
+            : null;
+        if ($coverUrl === null) {
+            return null; // métadonnées trouvées mais vraiment aucune couverture
+        }
+        if (empty($livre['couverture_url'])) {
+            $livre['couverture_url'] = $coverUrl;
+        }
+        try {
+            $path = $this->telechargerCouverture($coverUrl);
+            if ($path) {
+                $livre['couverture'] = $path;
+            }
+        } catch (\Throwable $e) {
+            $app->log('reparer download : ' . $e->getMessage());
+        }
+        if ($save && !empty($livre['id'])) {
+            $app->store('livres')->save($livre['id'], $livre);
+        }
+        return $path
+            ? 'Couverture récupérée pour « ' . ($meta['titre'] ?? $isbn) . ' ».'
+            : 'Métadonnées trouvées, couverture affichée via le lien distant.';
+    }
+
+    /**
      * Télécharge une couverture distante vers uploads/covers/.
      * @return string|null chemin relatif (uploads/covers/xxx.jpg) ou null
      */
