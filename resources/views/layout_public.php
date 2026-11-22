@@ -13,7 +13,7 @@
 <header class="site-header">
   <a class="project-brand" href="<?= url('/partage') ?>" aria-label="<?= e($config['app_name']) ?>">
     <img class="project-logo" src="<?= asset($config['logo_url'] ?? '/public/img/logo.svg') ?>" alt="">
-    <strong class="project-title"><?= e($config['header_text'] ?? 'Lisons') ?> <span class="project-title-plus">+</span></strong>
+    <strong class="project-title"><?= e($config['header_text'] ?? 'Lisons') ?> <span class="project-title-plus">+</span><?= !empty($config['header_suffix']) ? ' ' . e($config['header_suffix']) : '' ?></strong>
   </a>
   <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="site-navigation" aria-expanded="false"><span></span><span></span><span></span></button>
   <nav id="site-navigation" class="site-navigation" aria-label="Navigation principale">
