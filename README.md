@@ -7,6 +7,7 @@ Lisons-plus est une application web pour **inventorier ses lectures** et **parta
 - **Comptes utilisateurs** (calqués sur Plantons-plus) : inscription, connexion, mot de passe oublié, sessions PHP sécurisées, jetons CSRF, et **3 rôles hiérarchiques** : `contributeur` < `administrateur` < `super_administrateur` (le premier inscrit est super-administrateur), avec espace admin de gestion des utilisateurs et modération des fiches.
 - Chaque livre est décrit par ses **métadonnées ISBN** (recherche automatique via [Open Library](https://openlibrary.org) : titre, auteur, éditeur, année, pages, couverture, description) **plus vos informations personnelles** : statut de lecture, note sur 5, commentaire, étiquettes, date de lecture.
 - Des **fiches de lecture** (texte mis en forme, citations, note) par livre, publiables individuellement par lien (`/?partage={token}`).
+- **`/partage`** : liste publique de **toutes les fiches partagées** (tous membres, les tiennes comprises) — c'est la page d'accueil des visiteurs non connectés, accessible aussi une fois connecté via le menu « Explorer les fiches ».
 - **Partage par champ** : les champs d'un livre génèrent des liens publics qui agrègent toutes les fiches publiées correspondantes : `lisons-plus.example/?isbn=9782070360024`, `?auteur=zola`, `?tag=philosophie`, `?editeur=…`, `?statut=lu`, `?q=…`.
 - Import possible d'une **bibliothèque Calibre** existante.
 

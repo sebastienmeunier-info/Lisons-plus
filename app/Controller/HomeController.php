@@ -86,6 +86,17 @@ class HomeController
     }
 
     /**
+     * /partage — liste PUBLIQUE de toutes les fiches partagées (tous les
+     * utilisateurs, y compris l'utilisateur connecté). C'est la page
+     * d'accueil des visiteurs non connectés ; elle reste accessible une fois
+     * connecté. Les paramètres ?isbn/?auteur/?tag/?q=… filtrent le partage.
+     */
+    public function partage(Request $req): Response
+    {
+        return $this->public($req);
+    }
+
+    /**
      * Page publique. Les paramètres de champ (isbn, auteur, tag, serie,
      * editeur, titre, statut, q) filtrent les fiches de lecture publiées.
      */

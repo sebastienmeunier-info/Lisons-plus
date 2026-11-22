@@ -7,13 +7,13 @@
   </p>
 </section>
 
-<form class="filtres" method="get" action="<?= url('/') ?>">
+<form class="filtres" method="get" action="<?= url('/partage') ?>">
   <input type="search" name="q" value="<?= e($criteres['q'] ?? $criteres['titre'] ?? '') ?>" placeholder="Titre, auteur, éditeur, sujet…">
   <input type="search" name="auteur" value="<?= e($criteres['auteur'] ?? '') ?>" placeholder="Auteur">
   <input type="search" name="isbn" value="<?= e($criteres['isbn'] ?? '') ?>" placeholder="ISBN">
   <input type="search" name="tag" value="<?= e($criteres['tag'] ?? '') ?>" placeholder="Étiquette">
   <button class="bouton" type="submit">Rechercher</button>
-  <a class="bouton secondaire" href="<?= url('/') ?>">Tout voir</a>
+  <a class="bouton secondaire" href="<?= url('/partage') ?>">Tout voir</a>
 </form>
 
 <?php if (!$livres && !$fiches): ?>

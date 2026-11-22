@@ -4,7 +4,7 @@
   Recherchez par champ : <code>?isbn=9782070360024</code>, <code>?auteur=Camus</code>, <code>?tag=philosophie</code>, <code>?q=…</code></p>
 </section>
 
-<form class="filtres" method="get" action="<?= url('/') ?>">
+<form class="filtres" method="get" action="<?= url('/partage') ?>">
   <input type="search" name="q" placeholder="Titre, auteur, éditeur, sujet…" aria-label="Recherche publique">
   <input type="search" name="auteur" placeholder="Auteur" aria-label="Auteur">
   <input type="search" name="isbn" placeholder="ISBN" aria-label="ISBN">

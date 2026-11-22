@@ -11,7 +11,7 @@
 </head>
 <body class="public">
 <header class="site-header">
-  <a class="project-brand" href="<?= url('/') ?>" aria-label="<?= e($config['app_name']) ?>">
+  <a class="project-brand" href="<?= url('/partage') ?>" aria-label="<?= e($config['app_name']) ?>">
     <img class="project-logo" src="<?= asset($config['logo_url'] ?? '/public/img/logo.svg') ?>" alt="">
     <strong class="project-title"><?= e($config['header_text'] ?? 'Lisons') ?> <span class="project-title-plus">+</span></strong>
   </a>
@@ -30,7 +30,7 @@
 <?= $content ?>
 </main>
 <footer class="site-footer">
-  <span>Fiches de lecture partagées publiquement via <?= e($config['app_name']) ?> — <a href="<?= url('/') ?>">voir toutes les fiches</a></span>
+  <span>Fiches de lecture partagées publiquement via <?= e($config['app_name']) ?> — <a href="<?= url('/partage') ?>">voir toutes les fiches</a></span>
 </footer>
 <script>document.addEventListener('DOMContentLoaded',()=>{const toggle=document.querySelector('.menu-toggle'),navigation=document.querySelector('#site-navigation');if(!toggle||!navigation)return;const close=()=>{navigation.classList.remove('is-open');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Ouvrir le menu');};toggle.addEventListener('click',()=>{const open=!navigation.classList.contains('is-open');navigation.classList.toggle('is-open',open);toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Fermer le menu':'Ouvrir le menu');});navigation.addEventListener('click',event=>{if(event.target.closest('a'))close();});document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});});</script>
 <script>window.LISONS_BASE = <?= json_encode(url('/')) ?>;window.LISONS_URL_MODE = <?= json_encode(App\Core\App::get()->config()['url_mode'] ?? 'path') ?>;window.lisonsRoute = function (p) { p = String(p || '').replace(/^\/+/, ''); var b = String(window.LISONS_BASE || '/').replace(/\/+$/, ''); return window.LISONS_URL_MODE === 'qs' ? b + '/?/' + p : b + '/' + p; };</script>

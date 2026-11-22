@@ -56,6 +56,9 @@ $ADMIN = ['auth' => true, 'role' => 'administrateur'];
 
 // ----- Pages publiques -----
 $router->get('/', $home->index(...), 'accueil');
+// Liste de TOUTES les fiches partagées (tous utilisateurs, y compris le
+// connecté) — c'est la page d'accueil des visiteurs, accessible à tous.
+$router->get('/partage', $home->partage(...), 'partage_liste');
 $router->get('/partage/{token}', $fiche->publique(...), 'fiche_publique');
 $router->get('/api/isbn/{isbn}', $api->isbn(...), 'api_isbn');
 $router->get('/api/livres', $api->recherche(...), 'api_livres');

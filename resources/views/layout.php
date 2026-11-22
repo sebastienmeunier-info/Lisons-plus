@@ -21,6 +21,7 @@
       <a class="menu-button<?= ($page ?? '') === 'accueil' ? ' menu-current' : '' ?>" href="<?= url('/') ?>">Ma bibliothèque</a>
       <a class="menu-button<?= ($page ?? '') === 'nouveau' ? ' menu-current' : '' ?>" href="<?= url('/livres/nouveau') ?>">+ Ajouter</a>
       <a class="menu-button<?= ($page ?? '') === 'partages' ? ' menu-current' : '' ?>" href="<?= url('/partages') ?>">Fiches partagées</a>
+      <a class="menu-button<?= ($page ?? '') === 'explorer' ? ' menu-current' : '' ?>" href="<?= url('/partage') ?>">Explorer les fiches</a>
       <a class="menu-button<?= ($page ?? '') === 'stats' ? ' menu-current' : '' ?>" href="<?= url('/stats') ?>">📊 Stats</a>
       <a class="menu-button<?= ($page ?? '') === 'import' ? ' menu-current' : '' ?>" href="<?= url('/import') ?>">Import</a>
       <a class="menu-button<?= ($page ?? '') === 'compte' ? ' menu-current' : '' ?>" href="<?= url('/mon-compte') ?>">Mon compte</a>
@@ -29,7 +30,7 @@
       <?php endif; ?>
       <form class="logout-form" method="post" action="<?= url('/deconnexion') ?>"><?= csrf_field() ?><button class="menu-button menu-logout" type="submit">Déconnexion</button></form>
     <?php else: ?>
-      <a class="menu-button" href="<?= url('/?q=') ?>">Explorer les fiches</a>
+      <a class="menu-button" href="<?= url('/partage') ?>">Explorer les fiches</a>
       <a class="menu-button<?= ($page ?? '') === 'connexion' ? ' menu-current' : '' ?>" href="<?= url('/connexion') ?>">Connexion</a>
       <a class="menu-button<?= ($page ?? '') === 'inscription' ? ' menu-current' : '' ?>" href="<?= url('/inscription') ?>">Inscription</a>
     <?php endif; ?>
