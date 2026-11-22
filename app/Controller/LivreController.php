@@ -88,17 +88,98 @@ class LivreController
         if (!$this->peutVoir($livre, $user)) {
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
+        // Auto-réparation : pas de couverture affichable mais un ISBN existe
+        // → on tente de récupérer la couverture (cache 7 j, donc quasi gratuit).
+        if (couverture_src($livre) === null) {
+            $this->reparerCouverture($livre, (string) ($livre['isbn'] ?? ''), true);
+        }
         $fiches = $app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $livre['id'] && ($f['user_id'] ?? '') === $user['id']);
         $html = $app->view()->render('livres/voir', [
             'livre' => $livre,
             'fiches' => $fiches,
             'liens_partage' => liens_partage_livre($livre),
             'statuts' => $app->config()['statuts'],
+            'message' => (string) $req->input('message', ''),
+            'erreur' => (string) $req->input('erreur', ''),
             'csrfToken' => $app->auth()->csrfToken(),
             'user' => $user,
             'page' => 'livre',
         ]);
         return Response::html($html);
+    }
+
+    /**
+     * POST /livre/{id}/couverture — recharge la couverture via l'ISBN saisi
+     * (utile pour les livres ajoutés à la main, sans ISBN, à l'époque où la
+     * recherche ISBN ne fonctionnait pas encore côté serveur).
+     */
+    public function rechargerCouverture(Request $req, array $params): Response
+    {
+        $app = App::get();
+        $user = $app->auth()->currentUser();
+        $livre = $app->store('livres')->find($params['id']);
+        if (!$this->peutVoir($livre, $user)) {
+            return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
+        }
+        $isbnSaisi = (string) $req->input('isbn', '');
+        $msg = $this->reparerCouverture($livre, $isbnSaisi, true);
+        $cible = '/livre/' . $livre['id'] . ($msg !== null
+            ? '?message=' . rawurlencode($msg)
+            : '?erreur=' . rawurlencode('Couverture introuvable pour cet ISBN (vérifie la saisie).'));
+        return Response::redirect(View::url($cible));
+    }
+
+    /**
+     * Tente de récupérer la couverture d'un livre via Open Library.
+     * Met à jour $livre (couverture, couverture_url, isbn) et sauvegarde si $save.
+     * @return string|null message de succès, ou null si rien n'a pu être fait
+     */
+    private function reparerCouverture(array &$livre, string $isbnSaisi, bool $save): ?string
+    {
+        $app = App::get();
+        $isbn = \App\Model\Livre::nettoyerIsbn($isbnSaisi !== '' ? $isbnSaisi : (string) ($livre['isbn'] ?? ''));
+        if ($isbn === '') {
+            return null;
+        }
+        try {
+            $meta = $this->isbn()->lookup($isbn);
+        } catch (\Throwable $e) {
+            $app->log('reparerCouverture ' . $isbn . ' : ' . $e->getMessage());
+            return null;
+        }
+        if (!is_array($meta)) {
+            return null;
+        }
+        if (($livre['isbn'] ?? '') === '') {
+            $livre['isbn'] = $isbn;
+        }
+        $coverUrl = null;
+        if (!empty($meta['couverture_id'])) {
+            $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
+        }
+        if ($coverUrl) {
+            if (empty($livre['couverture_url'])) {
+                $livre['couverture_url'] = $coverUrl;
+            }
+            try {
+                $path = $this->isbn()->telechargerCouverture($coverUrl);
+                if ($path) {
+                    $livre['couverture'] = $path;
+                    if ($save) {
+                        $app->store('livres')->save($livre['id'], $livre);
+                    }
+                    return 'Couverture récupérée pour « ' . ($meta['titre'] ?? $isbn) . ' ».';
+                }
+            } catch (\Throwable $e) {
+                $app->log('reparerCouverture download : ' . $e->getMessage());
+            }
+            // téléchargement local impossible : on garde au moins l'URL distante
+            if ($save) {
+                $app->store('livres')->save($livre['id'], $livre);
+            }
+            return 'Métadonnées trouvées, couverture affichée via le lien distant.';
+        }
+        return null;
     }
 
     public function editer(Request $req, array $params): Response
@@ -137,6 +218,10 @@ class LivreController
         $livre['date_ajout'] = $existant['date_ajout'] ?? date('Y-m-d');
         if (($livre['couverture'] ?? '') === '') {
             $livre['couverture'] = $existant['couverture'] ?? '';
+        }
+        // ISBN saisi/modifié sans couverture locale → on tente de la récupérer
+        if (($livre['couverture'] ?? '') === '' && (string) ($livre['isbn'] ?? '') !== '') {
+            $this->reparerCouverture($livre, (string) $livre['isbn'], false);
         }
         $erreurs = Livre::valide($livre);
         if ($erreurs) {

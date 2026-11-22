@@ -81,6 +81,7 @@ $router->get('/livre/{id}', $livre->voir(...), 'livre_voir', $AUTH);
 $router->get('/livre/{id}/edit', $livre->editer(...), 'livre_editer', $AUTH);
 $router->post('/livre/{id}/maj', $livre->maj(...), 'livre_maj', $AUTH);
 $router->post('/livre/{id}/supprimer', $livre->supprimer(...), 'livre_supprimer', $AUTH);
+$router->post('/livre/{id}/couverture', $livre->rechargerCouverture(...), 'livre_couverture', $AUTH);
 
 $router->get('/partages', $fiche->partages(...), 'partages', $AUTH);
 $router->get('/livre/{id}/fiche/nouvelle', $fiche->nouvelle(...), 'fiche_nouvelle', $AUTH);

@@ -6,8 +6,15 @@
     <?php else: ?>
       <div class="couverture-vide grande">📖</div>
     <?php endif; ?>
+    <form method="post" action="<?= url('/livre/' . $livre['id'] . '/couverture') ?>" class="form-inline rechargement-couverture">
+      <?= csrf_field() ?>
+      <input type="text" name="isbn" value="<?= e($livre['isbn'] ?? '') ?>" placeholder="ISBN…" aria-label="ISBN pour la couverture">
+      <button class="bouton secondaire petit" type="submit">🖼 Recharger la couverture</button>
+    </form>
   </div>
   <div class="detail-infos">
+    <?php if (!empty($message)): ?><div class="alertes ok"><p><?= e($message) ?></p></div><?php endif; ?>
+    <?php if (!empty($erreur)): ?><div class="alertes" role="alert"><p><?= e($erreur) ?></p></div><?php endif; ?>
     <h1><?= e($livre['titre']) ?></h1>
     <p class="auteurs"><?= e(implode(', ', $livre['auteurs'] ?? [])) ?></p>
     <dl class="meta">
