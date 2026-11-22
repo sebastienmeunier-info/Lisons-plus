@@ -1,5 +1,6 @@
 # Données personnelles (non versionnées)
 data/*.json
+data/sessions/
 data/import-*.json
 uploads/covers/*
 !uploads/covers/.gitkeep
