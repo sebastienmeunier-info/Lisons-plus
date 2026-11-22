@@ -58,11 +58,20 @@
       <?php $livre = $livres[$f['livre_id'] ?? ''] ?? null; $auteur = $users[$f['user_id'] ?? ''] ?? null; ?>
       <article class="fiche-publique-carte">
         <a href="<?= url_partage($f['token']) ?>">
-          <h3><?= e($f['titre']) ?></h3>
-          <?php if ($livre): ?><p class="fiche-livre">sur <strong><?= e($livre['titre']) ?></strong> de <?= e(implode(', ', $livre['auteurs'] ?? [])) ?></p><?php endif; ?>
-          <p class="fiche-meta">par <?= e(user_display($auteur)) ?> · <?= e(date_fr(substr($f['date_creation'] ?? '', 0, 10))) ?>
-            <?php if (!empty($f['note'])): ?> · <span class="note"><?= str_repeat('★', (int) $f['note']) ?></span><?php endif; ?>
-          </p>
+          <span class="couverture">
+            <?php if ($livre && !empty($livre['couverture'])): ?>
+              <img src="<?= asset($livre['couverture']) ?>" alt="Couverture de <?= e($livre['titre']) ?>" loading="lazy">
+            <?php else: ?>
+              <span class="couverture-vide">📖</span>
+            <?php endif; ?>
+          </span>
+          <div class="fiche-corps">
+            <h3><?= e($f['titre']) ?></h3>
+            <?php if ($livre): ?><p class="fiche-livre">sur <strong><?= e($livre['titre']) ?></strong> de <?= e(implode(', ', $livre['auteurs'] ?? [])) ?></p><?php endif; ?>
+            <p class="fiche-meta">par <?= e(user_display($auteur)) ?> · <?= e(date_fr(substr($f['date_creation'] ?? '', 0, 10))) ?>
+              <?php if (!empty($f['note'])): ?> · <span class="note"><?= str_repeat('★', (int) $f['note']) ?></span><?php endif; ?>
+            </p>
+          </div>
         </a>
       </article>
     <?php endforeach; ?>
