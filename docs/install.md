@@ -60,7 +60,29 @@ location /lisons/ {
 location ~ ^/lisons/(data|logs|config|app)/ { deny all; }
 ```
 
-> Sans réécriture (`try_files … /index.php`), seules les URLs « réelles » (fichiers) répondent : activez-la, ou testez d'abord avec `php -S`.
+> Sans réécriture (`try_files … /index.php`), seules les URLs « réelles » (fichiers) répondent : activez-la, ou utilisez le **mode query-string** ci-dessous.
+
+### Option B — sans aucune conf serveur (déploiement FTP seul)
+
+Si nginx/Apache ne fait pas de réécriture vers `index.php` (les URLs propres
+`/lisons/connexion` renvoient une 404 du serveur web), activez le **mode query-string** :
+déposer un fichier `config/url_mode` contenant `qs` (ou variable `LISONS_URL_MODE=qs`).
+Toutes les URLs deviennent alors `/lisons/?/connexion`, `/lisons/?/livre/…` — 100 %
+fonctionnel sans toucher à la conf serveur. Les recherches publiques restent
+`/lisons/?isbn=…`, `/lisons/?auteur=…` (inchangé).
+
+### Protéger les données (URGENT si data/ est dans le webroot)
+
+`data/` et `logs/` ne doivent **jamais** être servis en HTTP (ils contiennent livres,
+utilisateurs + hash de mots de passe, sessions). Sans accès à la conf serveur :
+
+1. Créer `lisons-data/` et `lisons-logs/` **à côté** du dossier de l'app (hors DocumentRoot,
+   ex. `../lisons-data` si l'app est dans `/lisons/`) et les rendre writables par PHP (chmod 777).
+2. Y déplacer les `*.json` de `data/`, le dossier `sessions/`, et le contenu de `logs/`.
+3. L'application les détecte **automatiquement** (voir `config/config.php`) — aucun réglage.
+
+Vérifier ensuite : `/lisons/data/livres.json` et `/lisons/logs/app.log` doivent répondre 403/404.
+Si accès à la conf nginx : `location ~ ^/lisons/(data|logs|config|app)/ { deny all; }`.
 
 ### Protéger les données (recommandé en production)
 

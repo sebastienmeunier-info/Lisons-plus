@@ -22,7 +22,32 @@ if ($dataDir === '') {
     $dataDir = $root . '/data';
 }
 
+// Même principe pour les logs : ../lisons-logs/ à côté du projet si présent/writable
+$logsDir = getenv('LISONS_LOGS_DIR') ?: '';
+if ($logsDir === '' && is_dir($root . '/../lisons-logs') && is_writable($root . '/../lisons-logs')) {
+    $logsDir = $root . '/../lisons-logs';
+}
+if ($logsDir === '') {
+    $logsDir = $root . '/logs';
+}
+
+/*
+ * Mode d'URL : 'path' (défaut, URLs propres /lisons/connexion — nécessite une
+ * réécriture serveur : try_files nginx ou .htaccess Apache) ou 'qs' (query-string,
+ * fonctionne SANS aucune conf serveur : /lisons/?/connexion). Activer 'qs' via la
+ * variable d'environnement LISONS_URL_MODE=qs ou en déposant un fichier
+ * config/url_mode contenant « qs » (utile en déploiement FTP seul).
+ */
+$urlMode = strtolower((string) (getenv('LISONS_URL_MODE') ?: ''));
+if ($urlMode === '' && is_file($root . '/config/url_mode')) {
+    $urlMode = strtolower(trim((string) file_get_contents($root . '/config/url_mode')));
+}
+if (!in_array($urlMode, ['path', 'qs'], true)) {
+    $urlMode = 'path';
+}
+
 return [
+    'url_mode' => $urlMode,
     'app_name'    => getenv('LISONS_APP_NAME') ?: 'Lisons-plus',
     'base_url'    => rtrim(getenv('LISONS_BASE_URL') ?: '', '/'), // ex: https://livres.example.tld ; vide = détection auto
     'admin_email' => getenv('LISONS_ADMIN_EMAIL') ?: '',
@@ -34,7 +59,7 @@ return [
         // les déplacer HORS du webroot (LISONS_DATA_DIR, ou ../lisons-data détecté
         // auto) ou bloquer ^/(data|logs|config|app)/ côté serveur web.
         'data'   => $dataDir,
-        'logs'   => getenv('LISONS_LOGS_DIR') ?: $root . '/logs',
+        'logs'   => $logsDir,
         'uploads'=> $root . '/uploads', // servi publiquement (couvertures)
         'views'  => $root . '/resources/views',
     ],

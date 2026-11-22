@@ -49,10 +49,27 @@ class View
         return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    /** URL absolue à partir d'un chemin relatif. */
+    /**
+     * URL absolue à partir d'un chemin relatif.
+     * Mode 'path' (défaut) : /lisons/connexion — nécessite une réécriture serveur.
+     * Mode 'qs' (sans réécriture) : /lisons/?/connexion — /lisons/?isbn=… reste
+     * une recherche publique sur la racine.
+     */
     public static function url(string $path = ''): string
     {
         $base = App::baseUrl();
+        $mode = App::get()->config()['url_mode'] ?? 'path';
+        if ($mode === 'qs') {
+            if ($path === '' || $path === '/') {
+                return $base . '/';
+            }
+            if (str_starts_with($path, '/?')) {
+                // paramètres sur la racine : /lisons/?isbn=…
+                return $base . '/' . ltrim($path, '/');
+            }
+            $p = ltrim(str_replace('?', '&', $path), '/&');
+            return $base . '/?/' . $p;
+        }
         $path = '/' . ltrim($path, '/');
         return $base === '' ? $path : $base . $path;
     }

@@ -28,6 +28,7 @@
 <footer class="pied">
   Fiches de lecture partagées publiquement via <?= e($config['app_name']) ?> — <a href="<?= url('/') ?>">voir toutes les fiches</a>
 </footer>
+<script>window.LISONS_BASE = <?= json_encode(url('/')) ?>;</script>
 <script src="<?= url('/public/js/app.js') ?>"></script>
 </body>
 </html>

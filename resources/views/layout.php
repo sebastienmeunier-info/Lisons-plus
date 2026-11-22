@@ -36,6 +36,7 @@
 <footer class="pied">
   <?= e($config['app_name']) ?> — bibliothèque personnelle &amp; fiches de lecture partagées · données stockées localement (JSON, sans base de données)
 </footer>
+<script>window.LISONS_BASE = <?= json_encode(url('/')) ?>;</script>
 <script src="<?= url('/public/js/app.js') ?>"></script>
 </body>
 </html>

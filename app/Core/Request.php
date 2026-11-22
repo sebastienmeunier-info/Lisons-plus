@@ -8,6 +8,8 @@ class Request
 {
     private string $method;
     private string $uri;
+    /** Reste de la query string quand celle-ci contenait une route en mode QS (ex. /?/stats&next=/x). */
+    private string $qsReste = '';
 
     public function __construct()
     {
@@ -41,13 +43,33 @@ class Request
         if ($path === '/index.php') {
             $path = '/';
         }
-        return rtrim($path, '/') ?: '/';
+        $path = rtrim($path, '/') ?: '/';
+        // Mode query-string (déploiement sans réécriture serveur) :
+        // /lisons/?/connexion&next=/x  →  path = /connexion, $_GET['next'] = /x
+        if ($path === '/') {
+            $qs = (string) ($_SERVER['QUERY_STRING'] ?? '');
+            if ($qs !== '' && $qs[0] === '/') {
+                $parts = preg_split('/[&?]/', $qs, 2);
+                $route = $parts[0];
+                $this->qsReste = $parts[1] ?? '';
+                if ($this->qsReste !== '') {
+                    parse_str($this->qsReste, $params);
+                    $_GET = array_merge($params, $_GET);
+                }
+                $path = rtrim($route, '/') ?: '/';
+            }
+        }
+        return $path;
     }
 
-    /** path() + query string (pour les redirections « next »). */
+    /** path() + query string restante (pour les redirections « next »). */
     public function pathWithQuery(): string
     {
-        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        $qs = $this->qsReste !== '' ? $this->qsReste : (string) ($_SERVER['QUERY_STRING'] ?? '');
+        // si la query string était une route QS (commence par '/'), elle a déjà été extraite
+        if ($qs !== '' && $qs[0] === '/') {
+            $qs = '';
+        }
         return $this->path() . ($qs !== '' ? '?' . $qs : '');
     }
 

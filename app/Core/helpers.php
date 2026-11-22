@@ -6,7 +6,66 @@
 use App\Core\App;
 use App\Core\View;
 
-// Polyfill : certains builds de mbstring n'exposent pas mb_str_contains (PHP >= 8.0 requis sinon)
+/*
+ * Polyfills mbstring : certains hébergements PHP n'ont pas l'extension mbstring
+ * (ou un build partiel). On fournit les fonctions utilisées par l'application,
+ * basées sur iconv si disponible, sinon sur les fonctions natives/RegExp UTF-8.
+ */
+if (!function_exists('mb_strtolower')) {
+    function mb_strtolower(string $s, ?string $encoding = null): string
+    {
+        if (function_exists('iconv')) {
+            // ASCII//TRANSLIT approxime bien la casse UTF-8 pour la recherche plein texte
+            $t = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+            if (is_string($t)) {
+                return strtolower($t);
+            }
+        }
+        return strtolower($s);
+    }
+}
+if (!function_exists('mb_strtoupper')) {
+    function mb_strtoupper(string $s, ?string $encoding = null): string
+    {
+        if (function_exists('iconv')) {
+            $t = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+            if (is_string($t)) {
+                return strtoupper($t);
+            }
+        }
+        return strtoupper($s);
+    }
+}
+if (!function_exists('mb_strlen')) {
+    function mb_strlen(string $s, ?string $encoding = null): int
+    {
+        if (function_exists('iconv_strlen')) {
+            return iconv_strlen($s, 'UTF-8');
+        }
+        return (int) preg_match_all('/./us', $s);
+    }
+}
+if (!function_exists('mb_substr')) {
+    function mb_substr(string $s, int $start, ?int $length = null, ?string $encoding = null): string
+    {
+        if (function_exists('iconv_substr')) {
+            return (string) iconv_substr($s, $start, $length ?? mb_strlen($s), 'UTF-8');
+        }
+        preg_match_all('/./us', $s, $m);
+        $chars = $m[0];
+        return implode('', array_slice($chars, $start, $length));
+    }
+}
+if (!function_exists('mb_strpos')) {
+    function mb_strpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
+    {
+        if (function_exists('iconv_strpos')) {
+            return iconv_strpos($haystack, $needle, $offset, 'UTF-8');
+        }
+        $pos = strpos($haystack, $needle, $offset);
+        return $pos === false ? false : $pos;
+    }
+}
 if (!function_exists('mb_str_contains')) {
     function mb_str_contains(string $haystack, string $needle, ?string $encoding = null): bool
     {
