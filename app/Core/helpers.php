@@ -196,7 +196,14 @@ function couverture_src(?array $livre): ?string
     $couv = trim((string) ($livre['couverture'] ?? ''));
     if ($couv !== '') {
         $root = rtrim((string) (App::get()->config()['paths']['root'] ?? ''), '/');
-        if ($root !== '' && is_file($root . '/' . ltrim($couv, '/'))) {
+        $path = $root . '/' . ltrim($couv, '/');
+        if ($root !== '' && is_file($path)) {
+            // Auto-guérison : un fichier créé en 0600 (tempnam) est illisible
+            // pour le serveur web → on le rend lisible à la volée.
+            $perm = @fileperms($path);
+            if ($perm !== false && !($perm & 0044)) {
+                @chmod($path, 0644);
+            }
             return asset($couv);
         }
     }

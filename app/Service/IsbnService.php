@@ -207,6 +207,10 @@ class IsbnService
         $ext = 'jpg';
         $dest = $dir . '/' . bin2hex(random_bytes(8)) . '.' . $ext;
         rename($tmp, $dest);
+        // tempnam() crée en 0600 : illisible pour le serveur web (nginx/FPM
+        // différents) → 403. On rend le fichier lisible par tous.
+        @chmod($dest, 0644);
+        @chmod($dir, 0775);
         return 'uploads/' . $cfg['covers_dir'] . '/' . basename($dest);
     }
 
