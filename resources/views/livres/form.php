@@ -44,9 +44,10 @@ if (empty($edition) && (string) ($isbn_saisie ?? '') !== '') {
 ?>
 <form method="post" action="<?= e($actionForm) ?>" class="formulaire">
   <?= csrf_field() ?>
-  <?php if ($edition): ?>
-    <input type="hidden" name="isbn" value="<?= e($livre['isbn'] ?? '') ?>">
-  <?php endif; ?>
+  <?php // Champ ISBN toujours présent dans le formulaire (création aussi) : la
+      // saisie manuelle est alors soumise même si le champ visible (hors form)
+      // ou l'URL ?isbn= est perdu ; le JS le resynchronise aussi à la soumission. ?>
+  <input type="hidden" name="isbn" value="<?= e($edition ? (string) ($livre['isbn'] ?? '') : (string) ($isbn_saisie ?? '')) ?>">
 
   <div class="champ">
     <label for="titre">Titre *</label>

@@ -161,16 +161,18 @@
     modal.addEventListener('click', function (e) { if (e.target === modal) arreterScan(); });
   }
 
-  // --- ISBN transmis dans l'URL du formulaire à la soumission ---
-  // (le bouton « Ajouter à ma bibliothèque » soumet ce formulaire : l'ISBN
-  //  courant y est ajouté, pour que la couverture soit téléchargée même si
-  //  le champ isbn disparaissait du POST)
+  // --- ISBN transmis à la soumission ---
+  // Le champ ISBN visible (#isbn) est hors du formulaire : à la soumission on
+  // copie sa valeur dans le champ caché du form ET dans l'URL d'action, pour
+  // que la création ait toujours l'ISBN (téléchargement de la couverture).
   var formLivre = document.querySelector('form.formulaire');
-  var champIsbn = formLivre ? formLivre.querySelector('input[name="isbn"]') : null;
-  if (formLivre && champIsbn) {
+  var champIsbnForm = formLivre ? formLivre.querySelector('input[name="isbn"]') : null;
+  var champIsbnVisible = document.getElementById('isbn');
+  if (formLivre && champIsbnForm) {
     formLivre.addEventListener('submit', function () {
-      var v = champIsbn.value.trim();
+      var v = (champIsbnVisible && champIsbnVisible.value.trim()) || champIsbnForm.value.trim();
       if (!v) return;
+      champIsbnForm.value = v;
       var a = formLivre.getAttribute('action') || '';
       a = a.replace(/([?&])isbn=[^&]*/, '$1').replace(/[?&]$/, '');
       formLivre.setAttribute('action', a + (a.indexOf('?') >= 0 ? '&' : '?') + 'isbn=' + encodeURIComponent(v));
