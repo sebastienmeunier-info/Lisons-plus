@@ -265,7 +265,7 @@ textarea { min-height: 7rem; resize: vertical; }
   .site-header { position: sticky; align-items: center; gap: .65rem; min-height: 5.4rem; padding: .65rem .8rem; }
   .project-brand { flex: 1 1 auto; align-items: center; gap: .7rem; }
   .project-brand .project-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; font-size: clamp(1.15rem, 4.6vw, 1.45rem); line-height: 1.1; text-overflow: clip; }
-  .project-logo { flex: 0 0 auto; height: clamp(3.1rem, 14vw, 4rem); max-width: 4rem; object-fit: contain; }
+  .project-logo { flex: 0 0 auto; height: clamp(3.1rem, 14vw, 4rem); max-width: 11rem; object-fit: contain; }
   .menu-toggle { display: grid; flex: 0 0 3rem; place-content: center; gap: .32rem; min-width: 3rem; min-height: 3rem; padding: .55rem; border: 1px solid #718578; border-radius: .55rem; color: #fff; background: transparent; }
   .menu-toggle span { display: block; width: 1.35rem; height: .14rem; border-radius: 1rem; background: currentColor; }
   .menu-toggle:hover, .menu-toggle:focus-visible { color: #07150b; background: var(--hover); }
