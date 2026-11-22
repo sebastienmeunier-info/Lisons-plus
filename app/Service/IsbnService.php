@@ -78,65 +78,102 @@ class IsbnService
         if ($isbn === null) {
             return null;
         }
+        // Open Library indexe parfois l'ISBN-10 sans l'ISBN-13 (ou l'inverse) :
+        // on interroge chaque forme valide ; le cache reste indexé sur la forme 13.
+        $formes = $this->formesIsbn($saisie, $isbn);
         $cache = $this->cacheLire($isbn);
         if ($cache !== null) {
             return $cache;
         }
         $base = rtrim($this->config['isbn']['openlibrary_base'], '/');
-        // UN SEUL appel en priorité : search.json renvoie titre, auteurs,
-        // éditeur, année, pages, sujets, première phrase et couverture.
+        // search.json renvoie titre, auteurs, éditeur, année, pages, sujets,
+        // première phrase et couverture en un seul appel.
         $searchFields = 'title,subtitle,author_name,first_publish_year,publisher,cover_i,number_of_pages_median,subject,first_sentence';
-        $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=' . $searchFields . '&limit=1');
-        $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
-        if (!is_array($doc) || empty($doc['title'])) {
-            // Open Library throttle parfois (429/timeout) : une 2e tentative après une pause
-            usleep(1200000);
-            $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=' . $searchFields . '&limit=1');
+        $meta = null;
+        foreach ($formes as $forme) {
+            $search = $this->httpGetJson($base . '/search.json?isbn=' . $forme . '&fields=' . $searchFields . '&limit=1');
             $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
+            if (!is_array($doc) || empty($doc['title'])) {
+                // Open Library throttle parfois (429/timeout) : une 2e tentative après une pause
+                usleep(1200000);
+                $search = $this->httpGetJson($base . '/search.json?isbn=' . $forme . '&fields=' . $searchFields . '&limit=1');
+                $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
+            }
+            if (is_array($doc) && !empty($doc['title'])) {
+                $meta = [
+                    'isbn' => $isbn,
+                    'isbn_saisi' => $forme,
+                    'titre' => $doc['title'] ?? '',
+                    'sous_titre' => $doc['subtitle'] ?? null,
+                    'auteurs' => $doc['author_name'] ?? [],
+                    'editeur' => $doc['publisher'][0] ?? null,
+                    'annee' => $doc['first_publish_year'] ?? null,
+                    'pages' => $doc['number_of_pages_median'] ?? null,
+                    'description' => $doc['first_sentence'][0] ?? null,
+                    'sujets' => array_slice($doc['subject'] ?? [], 0, 10),
+                    'couverture_id' => $doc['cover_i'] ?? null,
+                    'source' => 'openlibrary-search',
+                ];
+                break;
+            }
         }
 
-        if (is_array($doc) && !empty($doc['title'])) {
-            $meta = [
-                'isbn' => $isbn,
-                'titre' => $doc['title'] ?? '',
-                'sous_titre' => $doc['subtitle'] ?? null,
-                'auteurs' => $doc['author_name'] ?? [],
-                'editeur' => $doc['publisher'][0] ?? null,
-                'annee' => $doc['first_publish_year'] ?? null,
-                'pages' => $doc['number_of_pages_median'] ?? null,
-                'description' => $doc['first_sentence'][0] ?? null,
-                'sujets' => array_slice($doc['subject'] ?? [], 0, 10),
-                'couverture_id' => $doc['cover_i'] ?? null,
-                'source' => 'openlibrary-search',
-            ];
-        } else {
+        if ($meta === null) {
             // Fallback : fiche édition /isbn/ (données riches mais sans auteurs)
-            $edition = $this->httpGetJson($base . '/isbn/' . $isbn . '.json');
-            if (!is_array($edition) || isset($edition['error'])) {
-                return null;
+            foreach ($formes as $forme) {
+                $edition = $this->httpGetJson($base . '/isbn/' . $forme . '.json');
+                if (!is_array($edition) || isset($edition['error']) || empty($edition['title'])) {
+                    continue;
+                }
+                $meta = [
+                    'isbn' => $isbn,
+                    'isbn_saisi' => $forme,
+                    'isbn_10' => $edition['isbn_10'][0] ?? null,
+                    'titre' => $edition['title'] ?? '',
+                    'sous_titre' => $edition['subtitle'] ?? null,
+                    'auteurs' => [],
+                    'editeur' => $edition['publishers'][0] ?? null,
+                    'lieu' => $edition['publish_places'][0] ?? null,
+                    'annee' => $this->extraireAnnee($edition['publish_date'] ?? null),
+                    'pages' => $edition['number_of_pages'] ?? null,
+                    'format' => $edition['physical_format'] ?? null,
+                    'langue' => $this->extraireLangue($edition['languages'][0] ?? null),
+                    'serie' => $edition['series'][0] ?? null,
+                    'couverture_id' => $edition['covers'][0] ?? null,
+                    'description' => null,
+                    'sujets' => [],
+                    'source' => 'openlibrary',
+                ];
+                break;
             }
-            $meta = [
-                'isbn' => $isbn,
-                'isbn_10' => $edition['isbn_10'][0] ?? null,
-                'titre' => $edition['title'] ?? '',
-                'sous_titre' => $edition['subtitle'] ?? null,
-                'auteurs' => [],
-                'editeur' => $edition['publishers'][0] ?? null,
-                'lieu' => $edition['publish_places'][0] ?? null,
-                'annee' => $this->extraireAnnee($edition['publish_date'] ?? null),
-                'pages' => $edition['number_of_pages'] ?? null,
-                'format' => $edition['physical_format'] ?? null,
-                'langue' => $this->extraireLangue($edition['languages'][0] ?? null),
-                'serie' => $edition['series'][0] ?? null,
-                'couverture_id' => $edition['covers'][0] ?? null,
-                'description' => null,
-                'sujets' => [],
-                'source' => 'openlibrary',
-            ];
+        }
+        if ($meta === null) {
+            return null;
         }
         $meta = $this->normaliserMeta($meta);
         $this->cacheEcrire($isbn, $meta);
         return $meta;
+    }
+
+    /**
+     * Formes d'ISBN à interroger : la forme saisie valide (10 ou 13), puis la
+     * forme 13 canonique si différente (certains ouvrages ne sont indexés que
+     * sous une seule des deux formes, ex. ISBN-10 2070361330).
+     * @return string[]
+     */
+    private function formesIsbn(string $saisie, string $isbn13): array
+    {
+        $brut = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $saisie));
+        $formes = [];
+        if (strlen($brut) === 10 && $this->checksum10($brut)) {
+            $formes[] = $brut;
+        } elseif (strlen($brut) === 13 && $this->checksum13($brut)) {
+            $formes[] = $brut;
+        }
+        if (!in_array($isbn13, $formes, true)) {
+            $formes[] = $isbn13;
+        }
+        return $formes;
     }
 
     /** Cache disque (7 jours) des métadonnées par ISBN, dans paths.data/cache. */
@@ -210,13 +247,25 @@ class IsbnService
             $livre['isbn'] = $isbn;
         }
         // 1) Tentative RAPIDE : CDN des couvertures directement par ISBN
-        //    (1 appel, 404 propre si aucune couverture — ?default=false)
-        $cdnUrl = $this->couvertureUrlIsbn($isbn);
-        try {
-            $path = $this->telechargerCouverture($cdnUrl);
-        } catch (\Throwable $e) {
-            $app->log('reparer CDN : ' . $e->getMessage());
-            $path = null;
+        //    (1 appel, 404 propre si aucune couverture — ?default=false).
+        //    On essaie la forme stockée puis, pour un ISBN-10, aussi sa forme 13.
+        $formesCdn = [$isbn];
+        if (strlen($isbn) === 10) {
+            $formesCdn[] = $this->vers13($isbn);
+        }
+        $path = null;
+        $cdnUrl = '';
+        foreach ($formesCdn as $formeCdn) {
+            $cdnUrl = $this->couvertureUrlIsbn($formeCdn);
+            try {
+                $path = $this->telechargerCouverture($cdnUrl);
+            } catch (\Throwable $e) {
+                $app->log('reparer CDN : ' . $e->getMessage());
+                $path = null;
+            }
+            if ($path) {
+                break;
+            }
         }
         if ($path) {
             $livre['couverture'] = $path;
