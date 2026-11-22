@@ -2,6 +2,7 @@
 
 Lisons-plus est une application web pour **inventorier ses lectures** et **partager ses fiches de lecture**.
 
+- **Charte graphique inspirée de Plantons-plus** : thème sombre « forêt », bandeau sticky avec logo et menu-boutons, burger mobile.
 - **Pas de base de données** : stockage pérenne en fichiers JSON (`data/`), comme Plantons-plus — auto-hébergeable sur n'importe quel hébergement PHP, `index.php` à la racine.
 - **Comptes utilisateurs** (calqués sur Plantons-plus) : inscription, connexion, mot de passe oublié, sessions PHP sécurisées, jetons CSRF, et **3 rôles hiérarchiques** : `contributeur` < `administrateur` < `super_administrateur` (le premier inscrit est super-administrateur), avec espace admin de gestion des utilisateurs et modération des fiches.
 - Chaque livre est décrit par ses **métadonnées ISBN** (recherche automatique via [Open Library](https://openlibrary.org) : titre, auteur, éditeur, année, pages, couverture, description) **plus vos informations personnelles** : statut de lecture, note sur 5, commentaire, étiquettes, date de lecture.

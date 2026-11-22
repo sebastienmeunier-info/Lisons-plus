@@ -102,6 +102,9 @@ if (!in_array($urlMode, ['path', 'qs'], true)) {
 return [
     'url_mode' => $urlMode,
     'app_name'    => getenv('LISONS_APP_NAME') ?: 'Lisons-plus',
+    // Charte graphique (comme Plantons-plus) : logo + texte du bandeau
+    'logo_url'    => getenv('LISONS_LOGO_URL') ?: '/public/img/logo.svg',
+    'header_text' => getenv('LISONS_HEADER_TEXT') ?: 'Lisons-plus',
     'base_url'    => rtrim(getenv('LISONS_BASE_URL') ?: '', '/'), // ex: https://livres.example.tld ; vide = détection auto
     'admin_email' => getenv('LISONS_ADMIN_EMAIL') ?: '',
     'debug'       => filter_var(getenv('LISONS_DEBUG') ?: false, FILTER_VALIDATE_BOOL),
