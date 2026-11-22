@@ -19,8 +19,21 @@
   <nav id="site-navigation" class="site-navigation" aria-label="Navigation principale">
     <span class="badge-partage">fiches partagées</span>
     <?php if ($user): ?>
+      <?php // connecté : le menu complet reste disponible sur les pages publiques ?>
+      <span class="user-menu">Bonjour <?= e($user['prenom'] ?? '') ?></span>
       <a class="menu-button" href="<?= url('/') ?>">Ma bibliothèque</a>
+      <a class="menu-button" href="<?= url('/livres/nouveau') ?>">Ajouter un livre</a>
+      <a class="menu-button" href="<?= url('/partages') ?>">Fiches partagées</a>
+      <a class="menu-button<?= ($page ?? '') === 'accueil_public' ? ' menu-current' : '' ?>" href="<?= url('/partage') ?>">Explorer les fiches</a>
+      <a class="menu-button" href="<?= url('/stats') ?>">📊 Stats</a>
+      <a class="menu-button" href="<?= url('/import') ?>">Import</a>
+      <a class="menu-button" href="<?= url('/mon-compte') ?>">Mon compte</a>
+      <?php if ($auth->hasRole($user, 'administrateur')): ?>
+        <a class="menu-button menu-admin" href="<?= url('/admin') ?>">⚙ Admin</a>
+      <?php endif; ?>
+      <form class="logout-form" method="post" action="<?= url('/deconnexion') ?>"><?= csrf_field() ?><button class="menu-button menu-logout" type="submit">Déconnexion</button></form>
     <?php else: ?>
+      <a class="menu-button<?= ($page ?? '') === 'accueil_public' ? ' menu-current' : '' ?>" href="<?= url('/partage') ?>">Explorer les fiches</a>
       <a class="menu-button" href="<?= url('/connexion') ?>">Connexion</a>
       <a class="menu-button" href="<?= url('/inscription') ?>">Inscription</a>
     <?php endif; ?>
