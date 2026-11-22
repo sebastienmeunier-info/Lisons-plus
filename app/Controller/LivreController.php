@@ -46,7 +46,11 @@ class LivreController
         $user = $app->auth()->currentUser();
         $meta = null;
         $isbnSaisi = (string) $req->input('isbn', '');
+        $flash = '';
         if ($isbnSaisi !== '') {
+            if ($this->isbn()->normaliser($isbnSaisi) === null) {
+                return $this->reponseErreur($req, 'ISBN invalide (10 ou 13 chiffres, checksum faux). Vérifie la saisie.', $isbnSaisi);
+            }
             try {
                 $meta = $this->isbn()->lookup($isbnSaisi);
             } catch (\Throwable $e) {
@@ -54,10 +58,18 @@ class LivreController
                 $meta = null;
             }
             if ($meta === null) {
-                return $this->reponseErreur($req, 'ISBN invalide, introuvable dans Open Library ou service indisponible. Vérifie la saisie ou remplis les champs à la main.', $isbnSaisi);
+                // Open Library indisponible/introuvable : on enregistre quand même le
+                // livre AVEC son ISBN → la couverture sera récupérée automatiquement
+                // à l'affichage de la page (auto-réparation).
+                $flash = 'Livre ajouté avec son ISBN, mais métadonnées Open Library indisponibles pour le moment — la couverture sera récupérée automatiquement.';
             }
         }
-        $livre = Livre::depuisFormulaire($req->all(), $app->config()['statuts'], $meta);
+        $post = $req->all();
+        // L'ISBN peut arriver par l'URL du formulaire (?isbn=…) si le champ POST est vide
+        if (trim((string) ($post['isbn'] ?? '')) === '' && $isbnSaisi !== '') {
+            $post['isbn'] = $isbnSaisi;
+        }
+        $livre = Livre::depuisFormulaire($post, $app->config()['statuts'], $meta);
         $livre['user_id'] = $user['id'];
         $id = uuid_short();
         $livre['id'] = $id;
@@ -71,7 +83,8 @@ class LivreController
             return $this->reponseErreur($req, implode(' ', $erreurs), $isbnSaisi, $livre);
         }
         $app->store('livres')->save($id, $livre);
-        return Response::redirect(url('/livre/' . $id));
+        $cible = '/livre/' . $id . ($flash !== '' ? '?message=' . rawurlencode($flash) : '');
+        return Response::redirect(url($cible));
     }
 
     public function voir(Request $req, array $params): Response

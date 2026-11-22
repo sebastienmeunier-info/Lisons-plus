@@ -88,6 +88,12 @@ class IsbnService
         $searchFields = 'title,subtitle,author_name,first_publish_year,publisher,cover_i,number_of_pages_median,subject,first_sentence';
         $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=' . $searchFields . '&limit=1');
         $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
+        if (!is_array($doc) || empty($doc['title'])) {
+            // Open Library throttle parfois (429/timeout) : une 2e tentative après une pause
+            usleep(1200000);
+            $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=' . $searchFields . '&limit=1');
+            $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
+        }
 
         if (is_array($doc) && !empty($doc['title'])) {
             $meta = [

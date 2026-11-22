@@ -80,7 +80,17 @@ class Request
 
     public function input(string $key, mixed $default = null): mixed
     {
-        $value = $_POST[$key] ?? $_GET[$key] ?? $default;
+        $post = $_POST[$key] ?? null;
+        $get = $_GET[$key] ?? null;
+        // Un champ POST vide ne masque pas un paramètre GET non vide
+        // (ex. : isbn transmis dans l'URL du formulaire d'ajout).
+        if (is_string($post) && trim($post) !== '') {
+            return trim($post);
+        }
+        if (is_string($get) && trim($get) !== '') {
+            return trim($get);
+        }
+        $value = $post ?? $get ?? $default;
         return is_string($value) ? trim($value) : $value;
     }
 
