@@ -20,7 +20,12 @@ class ApiController
         if ($normalise === null) {
             return Response::json(['ok' => false, 'erreur' => 'ISBN invalide (10 ou 13 chiffres, checksum faux).'], 422);
         }
-        $meta = $service->lookup($isbn);
+        try {
+            $meta = $service->lookup($isbn);
+        } catch (\Throwable $e) {
+            $app->log('api/isbn ' . $isbn . ' : ' . $e->getMessage());
+            return Response::json(['ok' => false, 'erreur' => 'Service ISBN indisponible pour le moment (réseau ou configuration serveur). Réessaie ou remplis les champs à la main.'], 502);
+        }
         if ($meta === null) {
             return Response::json(['ok' => false, 'erreur' => 'Aucun résultat pour cet ISBN dans Open Library.'], 404);
         }

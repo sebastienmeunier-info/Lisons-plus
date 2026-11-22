@@ -47,15 +47,24 @@ class LivreController
         $meta = null;
         $isbnSaisi = (string) $req->input('isbn', '');
         if ($isbnSaisi !== '') {
-            $meta = $this->isbn()->lookup($isbnSaisi);
+            try {
+                $meta = $this->isbn()->lookup($isbnSaisi);
+            } catch (\Throwable $e) {
+                $app->log('livre creer lookup ' . $isbnSaisi . ' : ' . $e->getMessage());
+                $meta = null;
+            }
             if ($meta === null) {
-                return $this->reponseErreur($req, 'ISBN invalide ou introuvable dans Open Library. Vérifie la saisie ou remplis les champs à la main.', $isbnSaisi);
+                return $this->reponseErreur($req, 'ISBN invalide, introuvable dans Open Library ou service indisponible. Vérifie la saisie ou remplis les champs à la main.', $isbnSaisi);
             }
             if (!empty($meta['couverture_id'])) {
-                $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
-                if ($coverUrl) {
-                    $meta['couverture'] = $this->isbn()->telechargerCouverture($coverUrl);
-                    $meta['couverture_url'] = $coverUrl;
+                try {
+                    $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
+                    if ($coverUrl) {
+                        $meta['couverture'] = $this->isbn()->telechargerCouverture($coverUrl);
+                        $meta['couverture_url'] = $coverUrl;
+                    }
+                } catch (\Throwable $e) {
+                    $app->log('livre creer couverture : ' . $e->getMessage());
                 }
             }
         }

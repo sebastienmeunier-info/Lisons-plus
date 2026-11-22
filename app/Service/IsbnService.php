@@ -228,45 +228,26 @@ class IsbnService
         return is_array($data) ? $data : null;
     }
 
+    /**
+     * GET HTTP résilient : ext-curl, sinon streams, sinon fsockopen
+     * (l'hébergement cible peut être un PHP minimal sans ext-curl).
+     */
     private function httpGet(string $url): ?string
     {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_TIMEOUT => $this->config['isbn']['timeout'],
-            CURLOPT_USERAGENT => $this->config['isbn']['user_agent'],
-            CURLOPT_ACCEPT_ENCODING => '',
-        ]);
-        $out = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($out === false || $code >= 400) {
-            return null;
-        }
-        return (string) $out;
+        return \App\Core\Http::get(
+            $url,
+            (int) ($this->config['isbn']['timeout'] ?? 20),
+            (string) ($this->config['isbn']['user_agent'] ?? 'Lisons-plus/1.0')
+        );
     }
 
     private function httpDownload(string $url, string $dest): bool
     {
-        $ch = curl_init($url);
-        $fp = fopen($dest, 'wb');
-        if (!$fp) {
-            curl_close($ch);
-            return false;
-        }
-        curl_setopt_array($ch, [
-            CURLOPT_FILE => $fp,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_TIMEOUT => $this->config['isbn']['timeout'],
-            CURLOPT_USERAGENT => $this->config['isbn']['user_agent'],
-        ]);
-        curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        fclose($fp);
-        return $code < 400;
+        return \App\Core\Http::download(
+            $url,
+            $dest,
+            (int) ($this->config['isbn']['timeout'] ?? 20) + 10,
+            (string) ($this->config['isbn']['user_agent'] ?? 'Lisons-plus/1.0')
+        );
     }
 }
