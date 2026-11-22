@@ -73,4 +73,4 @@ tar czf lisons-plus-backup.tar.gz data uploads
 
 ## Licence
 
-GNU Affero General Public License v3.0 ou ultérieure. Voir [LICENSE](LICENSE).
+GNU General Public License v3.0 ou ultérieure. Voir [LICENSE](LICENSE).
