@@ -198,3 +198,38 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(138,75,31,.3
 .liens-partage { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
 .liens-partage li { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .fiche-partages { margin-top: 1.5rem; border-top: 1px solid var(--bord); padding-top: 1rem; }
+
+/* --- Statistiques --- */
+.stats-glob { margin-bottom: 1.2rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.panneau { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 1rem 1.2rem; margin-bottom: 1rem; }
+.panneau h2 { margin-top: 0; font-size: 1.05rem; }
+.donut-et-legende { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.legende { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .3rem; font-size: .92rem; }
+.pastille { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .4rem; vertical-align: -1px; }
+.pastille.lu, .barre-remplissage.lu { background: #2e7d32; }
+.pastille.en_cours { background: #c98a12; }
+.pastille.a_lire { background: #2b4f8a; }
+.pastille.abandonne { background: #b3261e; }
+.pastille.pages { background: #8a4b1f; }
+.barre-ligne { display: flex; align-items: center; gap: .6rem; margin: .3rem 0; }
+.barre-etiquette { min-width: 130px; font-size: .88rem; text-align: right; }
+.barre { flex: 1; background: #f0e9dc; border-radius: 6px; height: 14px; overflow: hidden; }
+.barre-remplissage { display: block; height: 100%; background: var(--accent); border-radius: 6px; }
+.barre-remplissage.note { background: #c98a12; }
+.barre-remplissage.tag-bar { background: #6b6257; }
+.barre-valeur { min-width: 28px; font-size: .85rem; color: var(--doux); }
+.barres-mois { display: flex; align-items: flex-end; gap: .45rem; height: 110px; overflow-x: auto; padding-top: .5rem; }
+.barre-mois { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 34px; }
+.barre-mois .barre-verticale { display: inline-block; width: 12px; border-radius: 4px 4px 0 0; margin: 0 1px; }
+.barre-verticale.lue { background: #2e7d32; }
+.barre-verticale.pages { background: #8a4b1f; opacity: .75; }
+.barre-mois .barre-etiquette { min-width: 0; font-size: .7rem; color: var(--doux); margin-top: .3rem; text-transform: uppercase; }
+
+/* --- Scan ISBN --- */
+.scan-modal { position: fixed; inset: 0; background: rgba(20,14,8,.85); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.scan-modal[hidden] { display: none; }
+.scan-box { background: var(--carte); border-radius: 12px; padding: 1rem; max-width: 480px; width: 92%; text-align: center; }
+.scan-box video { width: 100%; border-radius: 8px; background: #000; aspect-ratio: 4/3; }
+.scan-statut { min-height: 1.4em; color: var(--accent-fonce); font-weight: 600; }
+.scan-viseur { border: 2px dashed var(--danger); border-radius: 8px; margin: -8px auto 0; width: 70%; height: 60px; pointer-events: none; }

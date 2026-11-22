@@ -13,13 +13,24 @@
   <div class="isbn-ligne">
     <input type="text" id="isbn" name="isbn" value="<?= e($isbn_saisie) ?>" placeholder="978… ou 2-07-036002-4" inputmode="numeric" autocomplete="off">
     <button class="bouton" type="button" id="btn-isbn">Rechercher</button>
+    <button class="bouton secondaire" type="button" id="btn-scan">📷 Scanner</button>
   </div>
-  <p class="aide" id="isbn-statut">Le scan d'une couverture ou la saisie de l'ISBN pré-remplit le formulaire ci-dessous.</p>
+  <p class="aide" id="isbn-statut">Saisis l'ISBN, ou scanne le code-barres au dos du livre (caméra du téléphone/ordinateur, fonctionne en HTTPS ou sur localhost).</p>
   <div id="isbn-apercu" class="isbn-apercu" hidden>
     <img id="isbn-couverture" src="" alt="Couverture trouvée">
     <div><strong id="isbn-titre"></strong><p id="isbn-auteurs"></p></div>
   </div>
 </section>
+<div id="scan-modal" class="scan-modal" hidden>
+  <div class="scan-box">
+    <p class="scan-statut" id="scan-statut">Initialisation de la caméra…</p>
+    <video id="scan-video" playsinline muted></video>
+    <div class="scan-viseur"></div>
+    <p class="aide">Place le code-barres (EAN-13) du livre dans le viseur.</p>
+    <button class="bouton secondaire" type="button" id="btn-scan-fermer">Fermer</button>
+  </div>
+</div>
+<script src="<?= url('/public/js/vendor/zxing.min.js') ?>"></script>
 <hr>
 <?php endif; ?>
 

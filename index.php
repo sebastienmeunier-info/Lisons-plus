@@ -32,6 +32,7 @@ use App\Controller\ImportController;
 use App\Controller\AuthController;
 use App\Controller\AccountController;
 use App\Controller\AdminController;
+use App\Controller\StatsController;
 
 $config = require __DIR__ . '/config/config.php';
 
@@ -46,6 +47,7 @@ $import = new ImportController();
 $auth = new AuthController();
 $account = new AccountController();
 $admin = new AdminController();
+$stats = new StatsController();
 
 // Options de protection : ['auth' => true] exige une session,
 // ['role' => 'administrateur'] exige un rôle suffisant (hiérarchie).
@@ -87,6 +89,9 @@ $router->post('/fiche/{fiche}/publication', $fiche->basculerPublication(...), 'f
 
 $router->get('/import', $import->form(...), 'import_form', $AUTH);
 $router->post('/import', $import->traiter(...), 'import_traiter', $AUTH);
+
+// Statistiques de lecture
+$router->get('/stats', $stats->index(...), 'stats', $AUTH);
 
 // ----- Mon compte -----
 $router->get('/mon-compte', $account->index(...), 'compte', $AUTH);

@@ -16,6 +16,7 @@
       <a href="<?= url('/') ?>" class="<?= ($page ?? '') === 'accueil' ? 'actif' : '' ?>">Ma bibliothèque</a>
       <a href="<?= url('/livres/nouveau') ?>" class="<?= ($page ?? '') === 'nouveau' ? 'actif' : '' ?>">+ Ajouter</a>
       <a href="<?= url('/partages') ?>" class="<?= ($page ?? '') === 'partages' ? 'actif' : '' ?>">Fiches partagées</a>
+      <a href="<?= url('/stats') ?>" class="<?= ($page ?? '') === 'stats' ? 'actif' : '' ?>">📊 Stats</a>
       <a href="<?= url('/import') ?>" class="<?= ($page ?? '') === 'import' ? 'actif' : '' ?>">Import</a>
       <a href="<?= url('/mon-compte') ?>" class="<?= ($page ?? '') === 'compte' ? 'actif' : '' ?>"> <?= e(user_display($user)) ?></a>
       <?php if ($auth->hasRole($user, 'administrateur')): ?>

@@ -30,12 +30,13 @@ Voir [docs/install.md](docs/install.md) : `index.php` à la racine du DocumentRo
 ## Utilisation
 
 1. **Inscription / connexion** : `/inscription`, `/connexion`. Le premier compte créé devient super-administrateur.
-2. **Ajouter un livre** : saisir son ISBN → pré-remplissage automatique via Open Library + couverture téléchargée localement. Compléter statut, note, commentaire, étiquettes.
-3. **Ma bibliothèque** (`/`, connecté) : grille personnelle avec recherche, filtres (statut, étiquette) et tris. Chaque livre n'est visible que par son propriétaire (et les admins).
-4. **Fiche de lecture** : depuis un livre, rédiger une fiche (mini-markdown : `**gras**`, `*italique*`, `# titre`, `> citation`, `- liste`, `[texte](https://…)`), puis **Publier / partager** → lien `/partage/{token}` + **liens par champ** (`/?isbn=…`, `/?auteur=…`, `/?tag=…`) copiables depuis la page du livre.
-5. **Côté visiteur** (déconnecté), `/` est une page publique : dernières fiches partagées, et `/?isbn=…&auteur=…&tag=…` listent les livres et fiches publiques correspondants.
-6. **Espace admin** (`/admin`, administrateur+) : statistiques, gestion des utilisateurs (rôles hiérarchiques, validation des inscriptions, suppression), modération des fiches publiques.
-7. **Import Calibre** (`/import`) :
+2. **Ajouter un livre** : saisir son ISBN, ou **scanner le code-barres EAN au dos du livre avec la caméra** (BarcodeDetector natif, sinon ZXing embarqué localement dans `public/js/vendor/` ; fonctionne en HTTPS ou sur `localhost`) → pré-remplissage automatique via Open Library + couverture téléchargée localement. Compléter statut, note, commentaire, étiquettes.
+3. **Statistiques de lecture** (`/stats`) : répartition par statut (donut SVG), notes, pages lues, lectures par mois sur 12 mois, top auteurs lus et étiquettes — calculées à la volée depuis tes livres.
+4. **Ma bibliothèque** (`/`, connecté) : grille personnelle avec recherche, filtres (statut, étiquette) et tris. Chaque livre n'est visible que par son propriétaire (et les admins).
+5. **Fiche de lecture** : depuis un livre, rédiger une fiche (mini-markdown : `**gras**`, `*italique*`, `# titre`, `> citation`, `- liste`, `[texte](https://…)`), puis **Publier / partager** → lien `/partage/{token}` + **liens par champ** (`/?isbn=…`, `/?auteur=…`, `/?tag=…`) copiables depuis la page du livre.
+6. **Côté visiteur** (déconnecté), `/` est une page publique : dernières fiches partagées, et `/?isbn=…&auteur=…&tag=…` listent les livres et fiches publiques correspondants.
+7. **Espace admin** (`/admin`, administrateur+) : statistiques globales, gestion des utilisateurs (rôles hiérarchiques, validation des inscriptions, suppression), modération des fiches publiques.
+8. **Import Calibre** (`/import`) :
    ```bash
    python3 scripts/calibre_to_json.py "/chemin/Bibliothèque calibre/metadata.db" data/import-calibre.json
    ```
