@@ -39,6 +39,7 @@
     </div>
     <div class="champ case">
       <label for="publique"><input type="checkbox" id="publique" name="publique" value="1" <?= !empty($fiche['publique']) ? 'checked' : '' ?>> Publier cette fiche (lien partageable)</label>
+      <?php if (empty($fiche['id'])): ?><p class="aide">Pré-cochée selon votre réglage « Mon compte → Partager mes fiches par défaut ».</p><?php endif; ?>
     </div>
   </div>
 

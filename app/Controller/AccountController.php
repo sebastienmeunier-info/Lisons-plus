@@ -49,6 +49,7 @@ class AccountController
                 'prenom' => $prenom,
                 'nom' => $nom,
                 'email' => $email,
+                'partage_par_defaut' => !empty($req->input('partage_par_defaut')),
                 'updated_at' => date(DATE_ATOM),
             ]));
             return Response::redirect(View::url('/mon-compte?message=' . rawurlencode('Profil mis à jour.')));

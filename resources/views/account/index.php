@@ -13,6 +13,10 @@
         <div class="champ"><label for="nom">Nom</label><input type="text" id="nom" name="nom" required maxlength="80" value="<?= e($user['nom'] ?? '') ?>"></div>
       </div>
       <div class="champ"><label for="email">Adresse e-mail</label><input type="email" id="email" name="email" required value="<?= e($user['email'] ?? '') ?>"></div>
+      <div class="champ case">
+        <label for="partage_par_defaut"><input type="checkbox" id="partage_par_defaut" name="partage_par_defaut" value="1" <?= !empty($user['partage_par_defaut']) ? 'checked' : '' ?>> Partager mes fiches de lecture par défaut</label>
+        <p class="aide">À la création d'une fiche, la case « Publier cette fiche » sera pré-cochée selon ce réglage (toujours modifiable fiche par fiche).</p>
+      </div>
       <div class="actions"><button class="bouton" type="submit">Enregistrer</button></div>
     </form>
   </section>

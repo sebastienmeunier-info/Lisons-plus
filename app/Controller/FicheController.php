@@ -43,7 +43,8 @@ class FicheController
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
         $html = $app->view()->render('fiches/form', [
-            'fiche' => ['livre_id' => $livre['id']],
+            // Case « publier » pré-cochée selon le réglage du profil du lecteur
+            'fiche' => ['livre_id' => $livre['id'], 'publique' => (bool) ($user['partage_par_defaut'] ?? false)],
             'livre' => $livre,
             'action' => url('/livre/' . $livre['id'] . '/fiche'),
             'titre_page' => 'Nouvelle fiche de lecture',

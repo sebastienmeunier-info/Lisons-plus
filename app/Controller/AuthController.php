@@ -82,6 +82,7 @@ class AuthController
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                 'role' => $role,
                 'registration_status' => $status,
+                'partage_par_defaut' => (bool) ($app->config()['partage_par_defaut'] ?? false),
                 'created_at' => date(DATE_ATOM),
                 'updated_at' => date(DATE_ATOM),
             ];
