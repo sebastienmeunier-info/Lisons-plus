@@ -1,7 +1,7 @@
 <article class="detail">
   <div class="detail-couverture">
     <?php if (!empty($livre['couverture'])): ?>
-      <img src="<?= url('/' . $livre['couverture']) ?>" alt="Couverture de <?= e($livre['titre']) ?>">
+      <img src="<?= asset($livre['couverture']) ?>" alt="Couverture de <?= e($livre['titre']) ?>">
     <?php else: ?>
       <div class="couverture-vide grande">📖</div>
     <?php endif; ?>

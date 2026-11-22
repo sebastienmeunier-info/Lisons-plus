@@ -50,6 +50,19 @@ class View
     }
 
     /**
+     * URL d'un asset statique (CSS, JS, image, couverture uploadée) : toujours un
+     * vrai chemin /lisons/public/… — JAMAIS le mode query-string, sinon le fichier
+     * ne serait pas servi (la requête passerait par index.php).
+     */
+    public static function asset(string $path): string
+    {
+        if (preg_match('#^(https?:)?//#i', $path)) {
+            return $path; // URL absolue (ex. logo_url externe)
+        }
+        return App::baseUrl() . '/' . ltrim($path, '/');
+    }
+
+    /**
      * URL absolue à partir d'un chemin relatif.
      * Mode 'path' (défaut) : /lisons/connexion — nécessite une réécriture serveur.
      * Mode 'qs' (sans réécriture) : /lisons/?/connexion — /lisons/?isbn=… reste

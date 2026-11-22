@@ -30,7 +30,7 @@
     <button class="bouton secondaire" type="button" id="btn-scan-fermer">Fermer</button>
   </div>
 </div>
-<script src="<?= url('/public/js/vendor/zxing.min.js') ?>"></script>
+<script src="<?= asset('/public/js/vendor/zxing.min.js') ?>"></script>
 <hr>
 <?php endif; ?>
 

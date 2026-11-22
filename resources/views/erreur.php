@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Erreur <?= (int) $code ?> — <?= e($config['app_name']) ?></title>
-<link rel="stylesheet" href="<?= url('/public/css/style.css') ?>">
+<link rel="stylesheet" href="<?= asset('/public/css/style.css') ?>">
 </head>
 <body class="public">
 <main class="contenu large erreur">

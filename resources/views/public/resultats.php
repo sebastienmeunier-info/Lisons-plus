@@ -31,7 +31,7 @@
       <div class="carte carte-static">
         <span class="couverture">
           <?php if (!empty($l['couverture'])): ?>
-            <img src="<?= url('/' . $l['couverture']) ?>" alt="Couverture de <?= e($l['titre']) ?>" loading="lazy">
+            <img src="<?= asset($l['couverture']) ?>" alt="Couverture de <?= e($l['titre']) ?>" loading="lazy">
           <?php else: ?>
             <span class="couverture-vide">📖</span>
           <?php endif; ?>

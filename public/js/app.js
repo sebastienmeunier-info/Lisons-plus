@@ -19,7 +19,10 @@
     statut.textContent = 'Recherche dans Open Library…';
     if (btn) btn.disabled = true;
     var base = (window.LISONS_BASE || '/').replace(/\/$/, '');
-    fetch(base + '/api/isbn/' + encodeURIComponent(isbn), { headers: { 'Accept': 'application/json' } })
+    var urlApi = (typeof window.lisonsRoute === 'function')
+      ? window.lisonsRoute('api/isbn/' + encodeURIComponent(isbn))
+      : base + '/api/isbn/' + encodeURIComponent(isbn);
+    fetch(urlApi, { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (btn) btn.disabled = false;

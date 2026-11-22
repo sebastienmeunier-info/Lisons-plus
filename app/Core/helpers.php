@@ -90,6 +90,14 @@ if (!function_exists('url')) {
     }
 }
 
+if (!function_exists('asset')) {
+    /** Asset statique (css/js/img/couverture) : vrai chemin, jamais le mode QS. */
+    function asset(string $path): string
+    {
+        return View::asset($path);
+    }
+}
+
 /** Génère un identifiant court unique. */
 function uuid_short(int $length = 12): string
 {
