@@ -82,14 +82,25 @@ class JsonStore
         if ($term === '') {
             return $this->all();
         }
-        return $this->query(function (array $rec) use ($term, $fields): bool {
+        // Un terme qui ressemble à un ISBN (≥ 9 chiffres/X) est comparé aussi
+        // sans ses séparateurs : « 978-2-07-292752-2 » doit retrouver « 9782072927522 ».
+        $termIsbn = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $term));
+        $termEstIsbn = $termIsbn !== '' && \strlen($termIsbn) >= 9;
+        return $this->query(function (array $rec) use ($term, $fields, $termIsbn, $termEstIsbn): bool {
             foreach ($fields as $f) {
                 $v = $rec[$f] ?? '';
                 if (is_array($v)) {
                     $v = implode(' ', $v);
                 }
-                if (\mb_str_contains(\mb_strtolower((string) $v), $term)) {
+                $vs = \mb_strtolower((string) $v);
+                if (\mb_str_contains($vs, $term)) {
                     return true;
+                }
+                if ($f === 'isbn' && $termEstIsbn) {
+                    $vIsbn = strtoupper((string) preg_replace('/[^0-9Xx]/', '', (string) $v));
+                    if ($vIsbn !== '' && (str_contains($vIsbn, $termIsbn) || str_contains($termIsbn, $vIsbn))) {
+                        return true;
+                    }
                 }
             }
             return false;

@@ -124,9 +124,12 @@ class HomeController
                 $hay = \mb_strtolower($v);
                 switch ($c) {
                     case 'isbn':
-                        $isbnLivre = strtoupper(preg_replace('/[^0-9Xx]/', '', $l['isbn'] ?? '') ?? '');
-                        $isbnRecherche = strtoupper(preg_replace('/[^0-9Xx]/', '', $v) ?? '');
-                        if ($isbnLivre === '' || !str_contains($isbnLivre, $isbnRecherche)) {
+                        // Comparaison sans séparateurs, dans les deux sens
+                        // (ISBN-10 saisi vs ISBN-13 stocké, ou l'inverse).
+                        $isbnLivre = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $l['isbn'] ?? ''));
+                        $isbnRecherche = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $v));
+                        if ($isbnLivre === '' || $isbnRecherche === ''
+                            || (!str_contains($isbnLivre, $isbnRecherche) && !str_contains($isbnRecherche, $isbnLivre))) {
                             return false;
                         }
                         break;
