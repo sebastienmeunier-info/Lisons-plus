@@ -30,8 +30,9 @@
       ?>
       <div class="carte carte-static">
         <span class="couverture">
-          <?php if (!empty($l['couverture'])): ?>
-            <img src="<?= asset($l['couverture']) ?>" alt="Couverture de <?= e($l['titre']) ?>" loading="lazy">
+          <?php $srcCouv = couverture_src($l); ?>
+          <?php if ($srcCouv): ?>
+            <img src="<?= e($srcCouv) ?>" alt="Couverture de <?= e($l['titre']) ?>" loading="lazy">
           <?php else: ?>
             <span class="couverture-vide">📖</span>
           <?php endif; ?>
@@ -59,8 +60,9 @@
       <article class="fiche-publique-carte">
         <a href="<?= url_partage($f['token']) ?>">
           <span class="couverture">
-            <?php if ($livre && !empty($livre['couverture'])): ?>
-              <img src="<?= asset($livre['couverture']) ?>" alt="Couverture de <?= e($livre['titre']) ?>" loading="lazy">
+            <?php $srcCouv = couverture_src($livre); ?>
+            <?php if ($srcCouv): ?>
+              <img src="<?= e($srcCouv) ?>" alt="Couverture de <?= e($livre['titre'] ?? '') ?>" loading="lazy">
             <?php else: ?>
               <span class="couverture-vide">📖</span>
             <?php endif; ?>

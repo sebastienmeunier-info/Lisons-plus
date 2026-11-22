@@ -182,6 +182,45 @@ function url_partage(string $token): string
     return url('/?partage=' . rawurlencode($token));
 }
 
+/**
+ * URL d'affichage de la couverture d'un livre :
+ *  1. fichier local uploads/covers/… s'il existe vraiment sur le disque ;
+ *  2. sinon l'URL distante Open Library (couverture_url) si connue ;
+ *  3. sinon null (les vues affichent alors le repli 📖).
+ */
+function couverture_src(?array $livre): ?string
+{
+    if (!$livre) {
+        return null;
+    }
+    $couv = trim((string) ($livre['couverture'] ?? ''));
+    if ($couv !== '') {
+        $root = rtrim((string) (App::get()->config()['paths']['root'] ?? ''), '/');
+        if ($root !== '' && is_file($root . '/' . ltrim($couv, '/'))) {
+            return asset($couv);
+        }
+    }
+    $dist = trim((string) ($livre['couverture_url'] ?? ''));
+    if ($dist !== '' && preg_match('#^https?://#i', $dist)) {
+        return $dist;
+    }
+    return null;
+}
+
+/**
+ * Réglage « partager mes fiches par défaut » du lecteur :
+ * champ profil s'il est renseigné, sinon la valeur par défaut de la config
+ * (cochée par défaut).
+ */
+function partage_par_defaut(?array $user): bool
+{
+    $v = $user['partage_par_defaut'] ?? null;
+    if ($v !== null) {
+        return (bool) $v;
+    }
+    return (bool) (App::get()->config()['partage_par_defaut'] ?? true);
+}
+
 /** Libellé d'un rôle. */
 function role_label(string $role): string
 {

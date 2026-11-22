@@ -44,7 +44,7 @@ class FicheController
         }
         $html = $app->view()->render('fiches/form', [
             // Case « publier » pré-cochée selon le réglage du profil du lecteur
-            'fiche' => ['livre_id' => $livre['id'], 'publique' => (bool) ($user['partage_par_defaut'] ?? false)],
+            'fiche' => ['livre_id' => $livre['id'], 'publique' => partage_par_defaut($user)],
             'livre' => $livre,
             'action' => url('/livre/' . $livre['id'] . '/fiche'),
             'titre_page' => 'Nouvelle fiche de lecture',

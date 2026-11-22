@@ -108,9 +108,10 @@ return [
     'base_url'    => rtrim(getenv('LISONS_BASE_URL') ?: '', '/'), // ex: https://livres.example.tld ; vide = détection auto
     'admin_email' => getenv('LISONS_ADMIN_EMAIL') ?: '',
     'debug'       => filter_var(getenv('LISONS_DEBUG') ?: false, FILTER_VALIDATE_BOOL),
-    // Partage des fiches de lecture par défaut pour les NOUVEAUX comptes
-    // (chaque lecteur peut ensuite régler ça dans « Mon compte »)
-    'partage_par_defaut' => filter_var(getenv('LISONS_PARTAGE_PAR_DEFAUT') ?: false, FILTER_VALIDATE_BOOL),
+    // Partage des fiches de lecture par défaut (coché par défaut pour les
+    // nouveaux comptes ET les comptes qui n'ont jamais réglé l'option ;
+    // chaque lecteur peut ensuite décocher ça dans « Mon compte »)
+    'partage_par_defaut' => filter_var(getenv('LISONS_PARTAGE_PAR_DEFAUT') ?: true, FILTER_VALIDATE_BOOL),
 
     'paths' => [
         'root'   => $root,

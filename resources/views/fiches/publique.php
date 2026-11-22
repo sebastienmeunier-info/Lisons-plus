@@ -1,7 +1,8 @@
 <article class="fiche publique">
   <header class="fiche-entete">
-    <?php if ($livre && !empty($livre['couverture'])): ?>
-      <img class="fiche-couverture" src="<?= asset($livre['couverture']) ?>" alt="Couverture de <?= e($livre['titre']) ?>">
+    <?php $srcCouv = couverture_src($livre ?? null); ?>
+    <?php if ($srcCouv): ?>
+      <img class="fiche-couverture" src="<?= e($srcCouv) ?>" alt="Couverture de <?= e($livre['titre'] ?? '') ?>">
     <?php endif; ?>
     <div>
       <h1><?= e($fiche['titre']) ?></h1>
