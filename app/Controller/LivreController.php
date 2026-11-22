@@ -56,26 +56,20 @@ class LivreController
             if ($meta === null) {
                 return $this->reponseErreur($req, 'ISBN invalide, introuvable dans Open Library ou service indisponible. Vérifie la saisie ou remplis les champs à la main.', $isbnSaisi);
             }
-            if (!empty($meta['couverture_id'])) {
-                try {
-                    $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
-                    if ($coverUrl) {
-                        $meta['couverture'] = $this->isbn()->telechargerCouverture($coverUrl);
-                        $meta['couverture_url'] = $coverUrl;
-                    }
-                } catch (\Throwable $e) {
-                    $app->log('livre creer couverture : ' . $e->getMessage());
-                }
-            }
         }
         $livre = Livre::depuisFormulaire($req->all(), $app->config()['statuts'], $meta);
         $livre['user_id'] = $user['id'];
+        $id = uuid_short();
+        $livre['id'] = $id;
+        // Couverture téléchargée AUTOMATIQUEMENT à la création si l'ISBN est connu
+        // (CDN par ISBN d'abord, sinon id de couverture des métadonnées).
+        if ((string) ($livre['isbn'] ?? '') !== '') {
+            $this->reparerCouverture($livre, (string) $livre['isbn'], false, $meta);
+        }
         $erreurs = Livre::valide($livre);
         if ($erreurs) {
             return $this->reponseErreur($req, implode(' ', $erreurs), $isbnSaisi, $livre);
         }
-        $id = uuid_short();
-        $livre['id'] = $id;
         $app->store('livres')->save($id, $livre);
         return Response::redirect(url('/livre/' . $id));
     }
@@ -88,10 +82,14 @@ class LivreController
         if (!$this->peutVoir($livre, $user)) {
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
-        // Auto-réparation : pas de couverture affichable mais un ISBN existe
-        // → on tente de récupérer la couverture (cache 7 j, donc quasi gratuit).
-        if (couverture_src($livre) === null) {
-            $this->reparerCouverture($livre, (string) ($livre['isbn'] ?? ''), true);
+        // Auto-réparation : dès que le fichier local manque (même si une URL
+        // distante existe) et qu'un ISBN est connu → téléchargement local auto
+        // (cache 7 j : aucun appel HTTP répété une fois la couverture en place).
+        $couvLocale = trim((string) ($livre['couverture'] ?? ''));
+        $root = rtrim((string) $app->config()['paths']['root'], '/');
+        $localOk = $couvLocale !== '' && is_file($root . '/' . $couvLocale);
+        if (!$localOk && trim((string) ($livre['isbn'] ?? '')) !== '') {
+            $this->reparerCouverture($livre, (string) $livre['isbn'], true);
         }
         $fiches = $app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $livre['id'] && ($f['user_id'] ?? '') === $user['id']);
         $html = $app->view()->render('livres/voir', [
@@ -137,7 +135,7 @@ class LivreController
      * Met à jour $livre (couverture, couverture_url, isbn) et sauvegarde si $save.
      * @return string|null message de succès, ou null si rien n'a pu être fait
      */
-    private function reparerCouverture(array &$livre, string $isbnSaisi, bool $save): ?string
+    private function reparerCouverture(array &$livre, string $isbnSaisi, bool $save, ?array $meta = null): ?string
     {
         $app = App::get();
         $isbn = \App\Model\Livre::nettoyerIsbn($isbnSaisi !== '' ? $isbnSaisi : (string) ($livre['isbn'] ?? ''));
@@ -165,11 +163,13 @@ class LivreController
             return 'Couverture récupérée.';
         }
         // 2) Repli : métadonnées complètes (cachées 7 j) + couverture par id
-        try {
-            $meta = $this->isbn()->lookup($isbn);
-        } catch (\Throwable $e) {
-            $app->log('reparerCouverture ' . $isbn . ' : ' . $e->getMessage());
-            return null;
+        if ($meta === null) {
+            try {
+                $meta = $this->isbn()->lookup($isbn);
+            } catch (\Throwable $e) {
+                $app->log('reparerCouverture ' . $isbn . ' : ' . $e->getMessage());
+                return null;
+            }
         }
         if (!is_array($meta)) {
             return null;
