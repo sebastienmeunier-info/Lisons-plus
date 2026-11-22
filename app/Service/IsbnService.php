@@ -145,7 +145,8 @@ class IsbnService
             $f = $this->cacheFile($isbn);
             if (is_file($f) && filemtime($f) > time() - 7 * 86400) {
                 $data = json_decode((string) file_get_contents($f), true);
-                if (is_array($data) && ($data['isbn'] ?? '') === $isbn) {
+                // version du cache : on ignore les entrées écrites par une vieille version
+                if (is_array($data) && ($data['isbn'] ?? '') === $isbn && (int) ($data['couv_cache_v'] ?? 0) >= 2) {
                     return $data;
                 }
             }
@@ -158,6 +159,7 @@ class IsbnService
     private function cacheEcrire(string $isbn, array $meta): void
     {
         try {
+            $meta['couv_cache_v'] = 2;
             $f = $this->cacheFile($isbn);
             if (!is_dir(dirname($f))) {
                 mkdir(dirname($f), 0775, true);
@@ -174,6 +176,15 @@ class IsbnService
             return null;
         }
         return rtrim($this->config['isbn']['covers_base'], '/') . '/' . $coverId . '-' . $size . '.jpg';
+    }
+
+    /**
+     * URL de couverture directement par ISBN (CDN rapide, ?default=false → 404
+     * si aucune couverture, au lieu d'une image vide).
+     */
+    public function couvertureUrlIsbn(string $isbn, string $size = 'L'): string
+    {
+        return rtrim($this->config['isbn']['covers_base'], '/') . '/b/isbn/' . $isbn . '-' . $size . '.jpg?default=false';
     }
 
     /**

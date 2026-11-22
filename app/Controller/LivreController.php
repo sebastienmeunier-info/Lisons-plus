@@ -122,10 +122,13 @@ class LivreController
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
         $isbnSaisi = (string) $req->input('isbn', '');
+        if (\App\Model\Livre::nettoyerIsbn($isbnSaisi !== '' ? $isbnSaisi : (string) ($livre['isbn'] ?? '')) === '') {
+            return Response::redirect(View::url('/livre/' . $livre['id'] . '?erreur=' . rawurlencode('Saisis d’abord l’ISBN du livre dans le champ prévu à cet effet.')));
+        }
         $msg = $this->reparerCouverture($livre, $isbnSaisi, true);
         $cible = '/livre/' . $livre['id'] . ($msg !== null
             ? '?message=' . rawurlencode($msg)
-            : '?erreur=' . rawurlencode('Couverture introuvable pour cet ISBN (vérifie la saisie).'));
+            : '?erreur=' . rawurlencode('Aucune couverture trouvée pour cet ISBN (vérifie la saisie ou réessaie dans quelques secondes).'));
         return Response::redirect(View::url($cible));
     }
 
@@ -141,6 +144,27 @@ class LivreController
         if ($isbn === '') {
             return null;
         }
+        if (($livre['isbn'] ?? '') === '') {
+            $livre['isbn'] = $isbn;
+        }
+        // 1) Tentative RAPIDE : CDN des couvertures directement par ISBN
+        //    (1 appel, 404 propre si aucune couverture — ?default=false)
+        $cdnUrl = $this->isbn()->couvertureUrlIsbn($isbn);
+        try {
+            $path = $this->isbn()->telechargerCouverture($cdnUrl);
+        } catch (\Throwable $e) {
+            $app->log('reparerCouverture CDN : ' . $e->getMessage());
+            $path = null;
+        }
+        if ($path) {
+            $livre['couverture'] = $path;
+            $livre['couverture_url'] = str_replace('?default=false', '', $cdnUrl);
+            if ($save) {
+                $app->store('livres')->save($livre['id'], $livre);
+            }
+            return 'Couverture récupérée.';
+        }
+        // 2) Repli : métadonnées complètes (cachées 7 j) + couverture par id
         try {
             $meta = $this->isbn()->lookup($isbn);
         } catch (\Throwable $e) {
@@ -150,36 +174,29 @@ class LivreController
         if (!is_array($meta)) {
             return null;
         }
-        if (($livre['isbn'] ?? '') === '') {
-            $livre['isbn'] = $isbn;
+        $coverUrl = !empty($meta['couverture_id'])
+            ? $this->isbn()->couvertureUrl((int) $meta['couverture_id'])
+            : null;
+        if ($coverUrl === null) {
+            return null; // métadonnées trouvées mais vraiment aucune couverture
         }
-        $coverUrl = null;
-        if (!empty($meta['couverture_id'])) {
-            $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
+        if (empty($livre['couverture_url'])) {
+            $livre['couverture_url'] = $coverUrl;
         }
-        if ($coverUrl) {
-            if (empty($livre['couverture_url'])) {
-                $livre['couverture_url'] = $coverUrl;
+        try {
+            $path = $this->isbn()->telechargerCouverture($coverUrl);
+            if ($path) {
+                $livre['couverture'] = $path;
             }
-            try {
-                $path = $this->isbn()->telechargerCouverture($coverUrl);
-                if ($path) {
-                    $livre['couverture'] = $path;
-                    if ($save) {
-                        $app->store('livres')->save($livre['id'], $livre);
-                    }
-                    return 'Couverture récupérée pour « ' . ($meta['titre'] ?? $isbn) . ' ».';
-                }
-            } catch (\Throwable $e) {
-                $app->log('reparerCouverture download : ' . $e->getMessage());
-            }
-            // téléchargement local impossible : on garde au moins l'URL distante
-            if ($save) {
-                $app->store('livres')->save($livre['id'], $livre);
-            }
-            return 'Métadonnées trouvées, couverture affichée via le lien distant.';
+        } catch (\Throwable $e) {
+            $app->log('reparerCouverture download : ' . $e->getMessage());
         }
-        return null;
+        if ($save) {
+            $app->store('livres')->save($livre['id'], $livre);
+        }
+        return $path
+            ? 'Couverture récupérée pour « ' . ($meta['titre'] ?? $isbn) . ' ».'
+            : 'Métadonnées trouvées, couverture affichée via le lien distant.';
     }
 
     public function editer(Request $req, array $params): Response
