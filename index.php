@@ -1,6 +1,6 @@
 <?php
 /**
- * Lisons-plus — front controller.
+ * Lisons-plus — front controller (à la racine, comme Plantons-plus).
  * Toute requête passe par ce fichier (voir docs/install.md pour la réécriture Apache/nginx).
  */
 
@@ -29,9 +29,11 @@ use App\Controller\LivreController;
 use App\Controller\FicheController;
 use App\Controller\ApiController;
 use App\Controller\ImportController;
+use App\Controller\AuthController;
+use App\Controller\AccountController;
+use App\Controller\AdminController;
 
 $config = require __DIR__ . '/config/config.php';
-$config['debug'] = (bool) (getenv('LISONS_DEBUG') ?: false);
 
 $app = App::boot($config);
 $router = $app->router();
@@ -41,34 +43,64 @@ $livre = new LivreController();
 $fiche = new FicheController();
 $api = new ApiController();
 $import = new ImportController();
+$auth = new AuthController();
+$account = new AccountController();
+$admin = new AdminController();
 
-// Pages
+// Options de protection : ['auth' => true] exige une session,
+// ['role' => 'administrateur'] exige un rôle suffisant (hiérarchie).
+$AUTH = ['auth' => true];
+$ADMIN = ['auth' => true, 'role' => 'administrateur'];
+
+// ----- Pages publiques -----
 $router->get('/', $home->index(...), 'accueil');
-$router->get('/livres/nouveau', $livre->nouveau(...), 'livre_nouveau');
-$router->post('/livres', $livre->creer(...), 'livre_creer');
-$router->get('/livre/{id}', $livre->voir(...), 'livre_voir');
-$router->get('/livre/{id}/edit', $livre->editer(...), 'livre_editer');
-$router->post('/livre/{id}/maj', $livre->maj(...), 'livre_maj');
-$router->post('/livre/{id}/supprimer', $livre->supprimer(...), 'livre_supprimer');
-
-// Fiches de lecture
-$router->get('/partages', $fiche->partages(...), 'partages');
-$router->get('/livre/{id}/fiche/nouvelle', $fiche->nouvelle(...), 'fiche_nouvelle');
-$router->post('/livre/{id}/fiche', $fiche->creer(...), 'fiche_creer');
-$router->get('/fiche/{fiche}/edit', $fiche->editer(...), 'fiche_editer');
-$router->post('/fiche/{fiche}/maj', $fiche->maj(...), 'fiche_maj');
-$router->post('/fiche/{fiche}/supprimer', $fiche->supprimer(...), 'fiche_supprimer');
-$router->post('/fiche/{fiche}/publication', $fiche->basculerPublication(...), 'fiche_publication');
 $router->get('/partage/{token}', $fiche->publique(...), 'fiche_publique');
-
-// API interne
 $router->get('/api/isbn/{isbn}', $api->isbn(...), 'api_isbn');
 $router->get('/api/livres', $api->recherche(...), 'api_livres');
 
-// Import
-$router->get('/import', $import->form(...), 'import_form');
-$router->post('/import', $import->traiter(...), 'import_traiter');
+// ----- Authentification -----
+$router->get('/inscription', $auth->registerForm(...), 'inscription_form');
+$router->post('/inscription', $auth->register(...), 'inscription');
+$router->get('/connexion', $auth->loginForm(...), 'connexion_form');
+$router->post('/connexion', $auth->login(...), 'connexion');
+$router->post('/deconnexion', $auth->logout(...), 'deconnexion', $AUTH);
+$router->get('/mot-de-passe-oublie', $auth->forgotForm(...), 'mdp_form');
+$router->post('/mot-de-passe-oublie', $auth->forgot(...), 'mdp');
+$router->get('/reinitialiser-mot-de-passe', $auth->resetForm(...), 'reset_form');
+$router->post('/reinitialiser-mot-de-passe', $auth->reset(...), 'reset');
 
-// Ressources statiques servies telles quelles si on passe par le serveur built-in
+// ----- Espace personnel (connecté) -----
+$router->get('/livres/nouveau', $livre->nouveau(...), 'livre_nouveau', $AUTH);
+$router->post('/livres', $livre->creer(...), 'livre_creer', $AUTH);
+$router->get('/livre/{id}', $livre->voir(...), 'livre_voir', $AUTH);
+$router->get('/livre/{id}/edit', $livre->editer(...), 'livre_editer', $AUTH);
+$router->post('/livre/{id}/maj', $livre->maj(...), 'livre_maj', $AUTH);
+$router->post('/livre/{id}/supprimer', $livre->supprimer(...), 'livre_supprimer', $AUTH);
+
+$router->get('/partages', $fiche->partages(...), 'partages', $AUTH);
+$router->get('/livre/{id}/fiche/nouvelle', $fiche->nouvelle(...), 'fiche_nouvelle', $AUTH);
+$router->post('/livre/{id}/fiche', $fiche->creer(...), 'fiche_creer', $AUTH);
+$router->get('/fiche/{fiche}/edit', $fiche->editer(...), 'fiche_editer', $AUTH);
+$router->post('/fiche/{fiche}/maj', $fiche->maj(...), 'fiche_maj', $AUTH);
+$router->post('/fiche/{fiche}/supprimer', $fiche->supprimer(...), 'fiche_supprimer', $AUTH);
+$router->post('/fiche/{fiche}/publication', $fiche->basculerPublication(...), 'fiche_publication', $AUTH);
+
+$router->get('/import', $import->form(...), 'import_form', $AUTH);
+$router->post('/import', $import->traiter(...), 'import_traiter', $AUTH);
+
+// ----- Mon compte -----
+$router->get('/mon-compte', $account->index(...), 'compte', $AUTH);
+$router->post('/mon-compte', $account->update(...), 'compte_maj', $AUTH);
+$router->post('/mon-compte/mot-de-passe', $account->updatePassword(...), 'compte_mdp', $AUTH);
+
+// ----- Administration (administrateur et super_administrateur) -----
+$router->get('/admin', $admin->index(...), 'admin', $ADMIN);
+$router->get('/admin/utilisateurs', $admin->users(...), 'admin_users', $ADMIN);
+$router->post('/admin/utilisateurs/role', $admin->changeRole(...), 'admin_role', $ADMIN);
+$router->post('/admin/utilisateurs/approuver', $admin->approve(...), 'admin_approuver', $ADMIN);
+$router->post('/admin/utilisateurs/supprimer', $admin->deleteUser(...), 'admin_suppr', $ADMIN);
+$router->get('/admin/contenus', $admin->contenus(...), 'admin_contenus', $ADMIN);
+$router->post('/admin/contenus/desactiver-fiche', $admin->desactiverFiche(...), 'admin_desactiver', $ADMIN);
+
 $request = new Request();
 $app->dispatch($request)->send();

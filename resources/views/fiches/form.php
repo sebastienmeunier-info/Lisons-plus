@@ -11,6 +11,7 @@
 <?php endif; ?>
 
 <form method="post" action="<?= e($action) ?>" class="formulaire">
+  <?= csrf_field() ?>
   <div class="champ">
     <label for="titre">Titre de la fiche *</label>
     <input type="text" id="titre" name="titre" required value="<?= e($fiche['titre'] ?? '') ?>" placeholder="ex : Pourquoi ce livre m'a marqué">

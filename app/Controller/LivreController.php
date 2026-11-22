@@ -4,6 +4,7 @@ namespace App\Controller;
 use App\Core\App;
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\View;
 use App\Model\Livre;
 use App\Service\IsbnService;
 
@@ -14,7 +15,15 @@ class LivreController
         return App::get()->service('isbn', fn ($app) => new IsbnService($app->config()));
     }
 
-    /** Formulaire d'ajout (avec recherche ISBN). */
+    /** Vrai si l'utilisateur courant peut voir ce livre (propriétaire ou admin). */
+    private function peutVoir(?array $livre, array $user): bool
+    {
+        if (!$livre) {
+            return false;
+        }
+        return ($livre['user_id'] ?? '') === $user['id'] || App::get()->auth()->hasRole($user, 'administrateur');
+    }
+
     public function nouveau(Request $req): Response
     {
         $app = App::get();
@@ -24,15 +33,17 @@ class LivreController
             'titre_page' => 'Ajouter un livre',
             'statuts' => $app->config()['statuts'],
             'isbn_saisie' => (string) $req->input('isbn', ''),
+            'csrfToken' => $app->auth()->csrfToken(),
+            'user' => $app->auth()->currentUser(),
             'page' => 'nouveau',
         ]);
         return Response::html($html);
     }
 
-    /** Création d'un livre (POST). */
     public function creer(Request $req): Response
     {
         $app = App::get();
+        $user = $app->auth()->currentUser();
         $meta = null;
         $isbnSaisi = (string) $req->input('isbn', '');
         if ($isbnSaisi !== '') {
@@ -40,7 +51,6 @@ class LivreController
             if ($meta === null) {
                 return $this->reponseErreur($req, 'ISBN invalide ou introuvable dans Open Library. Vérifie la saisie ou remplis les champs à la main.', $isbnSaisi);
             }
-            // Couverture
             if (!empty($meta['couverture_id'])) {
                 $coverUrl = $this->isbn()->couvertureUrl((int) $meta['couverture_id']);
                 if ($coverUrl) {
@@ -50,6 +60,7 @@ class LivreController
             }
         }
         $livre = Livre::depuisFormulaire($req->all(), $app->config()['statuts'], $meta);
+        $livre['user_id'] = $user['id'];
         $erreurs = Livre::valide($livre);
         if ($erreurs) {
             return $this->reponseErreur($req, implode(' ', $erreurs), $isbnSaisi, $livre);
@@ -60,19 +71,22 @@ class LivreController
         return Response::redirect(url('/livre/' . $id));
     }
 
-    /** Page détail d'un livre + ses fiches. */
     public function voir(Request $req, array $params): Response
     {
         $app = App::get();
+        $user = $app->auth()->currentUser();
         $livre = $app->store('livres')->find($params['id']);
-        if (!$livre) {
+        if (!$this->peutVoir($livre, $user)) {
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
-        $fiches = $app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $livre['id']);
+        $fiches = $app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $livre['id'] && ($f['user_id'] ?? '') === $user['id']);
         $html = $app->view()->render('livres/voir', [
             'livre' => $livre,
             'fiches' => $fiches,
+            'liens_partage' => liens_partage_livre($livre),
             'statuts' => $app->config()['statuts'],
+            'csrfToken' => $app->auth()->csrfToken(),
+            'user' => $user,
             'page' => 'livre',
         ]);
         return Response::html($html);
@@ -81,8 +95,9 @@ class LivreController
     public function editer(Request $req, array $params): Response
     {
         $app = App::get();
+        $user = $app->auth()->currentUser();
         $livre = $app->store('livres')->find($params['id']);
-        if (!$livre) {
+        if (!$this->peutVoir($livre, $user)) {
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
         $html = $app->view()->render('livres/form', [
@@ -91,6 +106,8 @@ class LivreController
             'titre_page' => 'Modifier : ' . $livre['titre'],
             'statuts' => $app->config()['statuts'],
             'isbn_saisie' => $livre['isbn'] ?? '',
+            'csrfToken' => $app->auth()->csrfToken(),
+            'user' => $user,
             'page' => 'livre',
         ]);
         return Response::html($html);
@@ -99,15 +116,16 @@ class LivreController
     public function maj(Request $req, array $params): Response
     {
         $app = App::get();
+        $user = $app->auth()->currentUser();
         $store = $app->store('livres');
         $existant = $store->find($params['id']);
-        if (!$existant) {
+        if (!$this->peutVoir($existant, $user)) {
             return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
         }
         $livre = Livre::depuisFormulaire($req->all(), $app->config()['statuts'], $existant);
         $livre['id'] = $existant['id'];
+        $livre['user_id'] = $existant['user_id'] ?? $user['id'];
         $livre['date_ajout'] = $existant['date_ajout'] ?? date('Y-m-d');
-        // Conserve la couverture existante si aucune nouvelle saisie
         if (($livre['couverture'] ?? '') === '') {
             $livre['couverture'] = $existant['couverture'] ?? '';
         }
@@ -120,6 +138,8 @@ class LivreController
                 'statuts' => $app->config()['statuts'],
                 'isbn_saisie' => $livre['isbn'] ?? '',
                 'erreurs' => $erreurs,
+                'csrfToken' => $app->auth()->csrfToken(),
+                'user' => $user,
                 'page' => 'livre',
             ]), 422);
         }
@@ -130,8 +150,12 @@ class LivreController
     public function supprimer(Request $req, array $params): Response
     {
         $app = App::get();
+        $user = $app->auth()->currentUser();
+        $existant = $app->store('livres')->find($params['id']);
+        if (!$this->peutVoir($existant, $user)) {
+            return Response::html($app->view()->render('erreur', ['code' => 404, 'message' => 'Livre introuvable.'], null), 404);
+        }
         $app->store('livres')->delete($params['id']);
-        // Supprime aussi les fiches associées
         foreach ($app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $params['id']) as $id => $f) {
             $app->store('fiches')->delete($id);
         }
@@ -148,6 +172,8 @@ class LivreController
             'statuts' => $app->config()['statuts'],
             'isbn_saisie' => $isbnSaisi,
             'erreurs' => [$message],
+            'csrfToken' => $app->auth()->csrfToken(),
+            'user' => $app->auth()->currentUser(),
             'page' => 'nouveau',
         ]), 422);
     }

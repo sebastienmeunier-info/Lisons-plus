@@ -39,9 +39,23 @@
       <a class="bouton" href="<?= url('/livre/' . $livre['id'] . '/edit') ?>">Modifier</a>
       <a class="bouton secondaire" href="<?= url('/livre/' . $livre['id'] . '/fiche/nouvelle') ?>">+ Fiche de lecture</a>
       <form method="post" action="<?= url('/livre/' . $livre['id'] . '/supprimer') ?>" onsubmit="return confirm('Supprimer ce livre et ses fiches ?');">
+        <?= csrf_field() ?>
         <button class="bouton danger" type="submit">Supprimer</button>
       </form>
     </div>
+    <?php if (!empty($liens_partage)): ?>
+      <h2>Partager ce livre (liens publics)</h2>
+      <p class="aide">Toute fiche publiée sur ce livre apparaîtra sur ces liens :</p>
+      <ul class="liens-partage">
+        <?php foreach ($liens_partage as $libelle => $lien): ?>
+          <li>
+            <span class="tag"><?= e($libelle) ?></span>
+            <input type="text" readonly class="lien-partage" value="<?= e($lien) ?>" onclick="this.select()">
+            <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= e($lien) ?>">Copier</button>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
   </div>
 </article>
 
@@ -74,12 +88,14 @@
       <div class="actions">
         <a class="bouton secondaire petit" href="<?= url('/fiche/' . $f['id'] . '/edit') ?>">Modifier</a>
         <form method="post" action="<?= url('/fiche/' . $f['id'] . '/publication') ?>">
+          <?= csrf_field() ?>
           <button class="bouton secondaire petit" type="submit"><?= !empty($f['publique']) ? 'Rendre privée' : 'Publier / partager' ?></button>
         </form>
         <?php if (!empty($f['publique']) && !empty($f['token'])): ?>
-          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url('/partage/' . $f['token']) ?>">Copier le lien</button>
+          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url('/partage/' . $f['token']) ?>">Copier le lien fiche</button>
         <?php endif; ?>
         <form method="post" action="<?= url('/fiche/' . $f['id'] . '/supprimer') ?>" onsubmit="return confirm('Supprimer cette fiche ?');">
+          <?= csrf_field() ?>
           <button class="bouton danger petit" type="submit">Supprimer</button>
         </form>
       </div>

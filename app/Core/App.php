@@ -1,8 +1,10 @@
 <?php
 namespace App\Core;
 
+use App\Service\AuthService;
+
 /**
- * Conteneur minimal : config, magasins, services et dispatch.
+ * Conteneur minimal : config, magasins, services, gardes d'accès et dispatch.
  */
 class App
 {
@@ -58,6 +60,11 @@ class App
         return $this->stores[$name];
     }
 
+    public function auth(): AuthService
+    {
+        return $this->service('auth', fn ($app) => new AuthService($app->config()));
+    }
+
     /** Service paresseux (fabrique enregistrée sous une clé). */
     public function service(string $name, callable $factory): mixed
     {
@@ -76,6 +83,33 @@ class App
                 404
             );
         }
+        $options = $match['options'];
+
+        // Garde-fous d'accès
+        if (!empty($options['auth']) || !empty($options['role'])) {
+            $user = $this->auth()->currentUser();
+            if (!$user) {
+                $next = rawurlencode($request->uri());
+                return Response::redirect(View::url('/connexion?next=' . $next));
+            }
+            if (!empty($options['role']) && !$this->auth()->hasRole($user, $options['role'])) {
+                return Response::html(
+                    $this->view->render('erreur', ['code' => 403, 'message' => 'Accès réservé aux comptes ayant un rôle suffisant (' . ($this->config['auth']['role_labels'][$options['role']] ?? $options['role']) . ').'], null),
+                    403
+                );
+            }
+        }
+
+        // Vérification CSRF sur tous les POST (sauf option contraire)
+        if ($request->isPost() && ($options['csrf'] ?? true)) {
+            if (!$this->auth()->verifyCsrf((string) $request->input('csrf_token', ''))) {
+                return Response::html(
+                    $this->view->render('erreur', ['code' => 419, 'message' => 'Session expirée (jeton CSRF invalide) : revenez en arrière et réessayez.'], null),
+                    419
+                );
+            }
+        }
+
         try {
             $result = ($match['handler'])($request, $match['params']);
             if ($result instanceof Response) {
@@ -114,7 +148,11 @@ class App
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
         $scheme = $https ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/index.php');
+        $dir = dirname($script);
+        if ($dir === '.' || $dir === '/' || $dir === '\\') {
+            $dir = '';
+        }
         return $scheme . '://' . $host . $dir;
     }
 }

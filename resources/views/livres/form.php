@@ -24,6 +24,7 @@
 <?php endif; ?>
 
 <form method="post" action="<?= e($action) ?>" class="formulaire">
+  <?= csrf_field() ?>
   <?php if ($edition): ?>
     <input type="hidden" name="isbn" value="<?= e($livre['isbn'] ?? '') ?>">
   <?php endif; ?>

@@ -99,3 +99,61 @@ function store(string $name): \App\Core\JsonStore
 {
     return App::get()->store($name);
 }
+
+/** Champ caché CSRF à inclure dans tous les formulaires POST. */
+function csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . e(App::get()->auth()->csrfToken()) . '">';
+}
+
+/** Libellé d'un rôle. */
+function role_label(string $role): string
+{
+    return App::get()->config()['auth']['role_labels'][$role] ?? $role;
+}
+
+/** Initiales / nom affiché d'un utilisateur. */
+function user_display(?array $user): string
+{
+    if (!$user) {
+        return '';
+    }
+    $prenom = trim($user['prenom'] ?? '');
+    $nom = trim($user['nom'] ?? '');
+    return trim($prenom . ' ' . $nom) ?: ($user['email'] ?? '');
+}
+
+/**
+ * Liens de partage publics générés à partir des champs d'un livre :
+ * /?isbn=…, /?auteur=…, /?tag=…, /?q=…
+ * @return array<string,string> libellé => URL absolue
+ */
+function liens_partage_livre(array $livre): array
+{
+    $liens = [];
+    if (!empty($livre['isbn'])) {
+        $liens['ISBN ' . $livre['isbn']] = url('/?isbn=' . rawurlencode($livre['isbn']));
+    }
+    foreach ($livre['auteurs'] ?? [] as $a) {
+        $liens['Auteur : ' . $a] = url('/?auteur=' . rawurlencode($a));
+    }
+    foreach ($livre['tags'] ?? [] as $t) {
+        $liens['Étiquette : ' . $t] = url('/?tag=' . rawurlencode($t));
+    }
+    if (!empty($livre['titre'])) {
+        $liens['Titre : ' . $livre['titre']] = url('/?q=' . rawurlencode($livre['titre']));
+    }
+    return $liens;
+}
+
+/** Normalise les clés de query reçues (ISBN -> isbn, Auteur -> auteur…). */
+function query_params(\App\Core\Request $req): array
+{
+    $out = [];
+    foreach ($req->all() as $k => $v) {
+        if (is_string($v)) {
+            $out[\mb_strtolower((string) $k)] = $v;
+        }
+    }
+    return $out;
+}

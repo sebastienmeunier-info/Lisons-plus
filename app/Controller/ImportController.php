@@ -16,6 +16,8 @@ class ImportController
             'page' => 'import',
             'message' => $req->input('message', ''),
             'erreurs' => [],
+            'csrfToken' => $app->auth()->csrfToken(),
+            'user' => $app->auth()->currentUser(),
         ]);
         return Response::html($html);
     }
@@ -46,15 +48,17 @@ class ImportController
             } else {
                 $store = $app->store('livres');
                 $existants = $store->all();
-                // Index des ISBN existants pour éviter les doublons
+                $user = $app->auth()->currentUser();
+                // Index des ISBN déjà présents DANS LA BIBLIOTHÈQUE DE L'UTILISATEUR COURANT
                 $isbnExistants = [];
                 foreach ($existants as $l) {
-                    if (!empty($l['isbn'])) {
+                    if (($l['user_id'] ?? '') === $user['id'] && !empty($l['isbn'])) {
                         $isbnExistants[$l['isbn']] = true;
                     }
                 }
                 foreach ($livres as $l) {
                     $l = Livre::depuisFormulaire($l, $app->config()['statuts'], $l);
+                    $l['user_id'] = $user['id'];
                     if (Livre::valide($l) !== []) {
                         continue;
                     }
@@ -74,7 +78,13 @@ class ImportController
         }
 
         if ($erreurs) {
-            $html = $app->view()->render('import/form', ['page' => 'import', 'erreurs' => $erreurs]);
+            $html = $app->view()->render('import/form', [
+                'page' => 'import',
+                'erreurs' => $erreurs,
+                'csrfToken' => $app->auth()->csrfToken(),
+                'user' => $app->auth()->currentUser(),
+                'message' => '',
+            ]);
             return Response::html($html, 422);
         }
         return Response::redirect(url('/import?message=' . urlencode("Import terminé : $importes livre(s) ajouté(s), $doublons doublon(s) ignoré(s).")));

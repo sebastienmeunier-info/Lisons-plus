@@ -166,3 +166,35 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(138,75,31,.3
   .detail { grid-template-columns: 1fr; }
   .fiche-entete { flex-direction: column; }
 }
+
+/* --- Auth / compte / admin --- */
+.carte-auth { max-width: 560px; margin: 2rem auto; }
+.carte-auth .formulaire { margin-top: 1rem; }
+.form-deconnexion { display: inline; margin: 0; }
+.form-deconnexion .lien { background: none; border: 0; color: #f3e7dc; cursor: pointer; padding: .35rem .7rem; font: inherit; border-radius: 6px; }
+.form-deconnexion .lien:hover { background: rgba(255,255,255,.15); }
+.compte-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+.admin-stats { margin: 1rem 0; }
+.admin-nav { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0 2rem; }
+.roles-liste code { background: #f0e9dc; border-radius: 4px; padding: .05rem .4rem; font-size: .85em; }
+.table-users { width: 100%; border-collapse: collapse; background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); overflow: hidden; }
+.table-users th, .table-users td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--bord); vertical-align: middle; }
+.table-users th { background: #faf6ef; font-size: .85rem; color: var(--doux); }
+.form-inline { display: inline-flex; gap: .35rem; align-items: center; margin: .1rem 0; }
+.form-inline select { padding: .25rem .4rem; font-size: .85rem; }
+
+/* --- Pages publiques de partage par champ --- */
+.liste-fiches-publiques { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.fiche-publique-carte { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); overflow: hidden; }
+.fiche-publique-carte > a { display: block; padding: .9rem 1.1rem; text-decoration: none; color: inherit; }
+.fiche-publique-carte h3 { margin: 0 0 .3rem; font-size: 1.05rem; color: var(--accent-fonce); }
+.fiche-publique-carte:hover { box-shadow: 0 4px 14px rgba(60,40,20,.12); }
+.fiches-liens-mini { margin: .2rem 0 0; font-size: .8rem; }
+.fiches-liens-mini a { color: var(--accent); }
+.carte-static { cursor: default; }
+.carte-static:hover { transform: none; box-shadow: none; }
+.tag.lien-tag { text-decoration: none; color: var(--accent-fonce); border: 1px solid var(--bord); background: #fdf8ef; }
+.tag.lien-tag:hover { background: #f3e9d8; }
+.liens-partage { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+.liens-partage li { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.fiche-partages { margin-top: 1.5rem; border-top: 1px solid var(--bord); padding-top: 1rem; }

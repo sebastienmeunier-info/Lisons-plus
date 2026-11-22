@@ -18,6 +18,7 @@
 </div>
 
 <form method="post" action="<?= url('/import') ?>" enctype="multipart/form-data" class="formulaire">
+  <?= csrf_field() ?>
   <div class="champ">
     <label for="fichier">Fichier (.json ou .csv)</label>
     <input type="file" id="fichier" name="fichier" accept=".json,.csv" required>
