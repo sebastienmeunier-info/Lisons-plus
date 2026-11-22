@@ -8,13 +8,60 @@
 $root = dirname(__DIR__);
 
 /*
- * Dossier des données (JSON + sessions). Ordre de priorité :
- *  1. LISONS_DATA_DIR (variable d'environnement, conf serveur) ;
- *  2. ../lisons-data/ à côté du projet, s'il existe et est writable par PHP
- *     → permet de sortir data/ du webroot par simple upload FTP, sans conf ;
- *  3. data/ dans le projet (défaut, dev local).
+ * ============================================================
+ *  Stockage des données hors du webroot (anti-fuite).
+ *  En production (PHP-FPM/Apache), si aucune conf n'est faite,
+ *  l'application déplace ELLE-MÊME data/ et logs/ vers
+ *  ../../lisons-data et ../../lisons-logs (hors DocumentRoot,
+ *  que l'app soit à la racine ou en sous-dossier du webroot).
+ *  Priorité : 1. LISONS_DATA_DIR (env) ; 2. migration auto hors
+ *  webroot ; 3. ../lisons-data existant ; 4. data/ local (dev).
+ * ============================================================
  */
+
+/** Dossier hors webroot pour $nom, créé si possible. 2 niveaux au-dessus = toujours hors DocumentRoot. */
+$lisons_dossier_hors_webroot = function (string $root, string $nom): ?string {
+    foreach ([$root . '/../../' . $nom, $root . '/../' . $nom] as $candidat) {
+        if (is_dir($candidat) && is_writable($candidat)) {
+            return $candidat;
+        }
+        if (@mkdir($candidat, 0775, true) && is_writable($candidat)) {
+            return $candidat;
+        }
+    }
+    return null;
+};
+
+/** Déplace les *.json et sessions/ de $src vers $dst (sans jamais écraser). */
+$lisons_migrer = function (string $src, string $dst): void {
+    if (!is_dir($src)) {
+        return;
+    }
+    foreach (glob($src . '/*.json') ?: [] as $f) {
+        $cible = $dst . '/' . basename($f);
+        if (!file_exists($cible)) {
+            @rename($f, $cible);
+        }
+    }
+    if (is_dir($src . '/sessions') && !is_dir($dst . '/sessions')) {
+        @rename($src . '/sessions', $dst . '/sessions');
+    }
+    // marqueurs de protection restants dans l'ancien dossier (Apache)
+    @file_put_contents($src . '/.htaccess', "Require all denied\n");
+};
+
+$sapi = php_sapi_name();
+$enProd = in_array($sapi, ['apache2handler', 'fpm-fcgi', 'cgi', 'cgi-fcgi'], true)
+    || (bool) getenv('LISONS_TEST_MIGRATION'); // forcé pour les tests
+
 $dataDir = getenv('LISONS_DATA_DIR') ?: '';
+if ($dataDir === '' && $enProd) {
+    $hors = $lisons_dossier_hors_webroot($root, 'lisons-data');
+    if ($hors !== null && is_dir($root . '/data') && $hors !== $root . '/data') {
+        $lisons_migrer($root . '/data', $hors);
+        $dataDir = $hors;
+    }
+}
 if ($dataDir === '' && is_dir($root . '/../lisons-data') && is_writable($root . '/../lisons-data')) {
     $dataDir = $root . '/../lisons-data';
 }
@@ -22,8 +69,14 @@ if ($dataDir === '') {
     $dataDir = $root . '/data';
 }
 
-// Même principe pour les logs : ../lisons-logs/ à côté du projet si présent/writable
 $logsDir = getenv('LISONS_LOGS_DIR') ?: '';
+if ($logsDir === '' && $enProd) {
+    $horsLogs = $lisons_dossier_hors_webroot($root, 'lisons-logs');
+    if ($horsLogs !== null && is_dir($root . '/logs') && $horsLogs !== $root . '/logs') {
+        $lisons_migrer($root . '/logs', $horsLogs);
+        $logsDir = $horsLogs;
+    }
+}
 if ($logsDir === '' && is_dir($root . '/../lisons-logs') && is_writable($root . '/../lisons-logs')) {
     $logsDir = $root . '/../lisons-logs';
 }

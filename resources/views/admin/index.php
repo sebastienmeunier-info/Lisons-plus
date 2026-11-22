@@ -1,6 +1,17 @@
 <h1>⚙ Administration</h1>
 <p>Connecté en tant que <strong><?= e(user_display($user)) ?></strong> (<?= e($role_labels[$user['role'] ?? ''] ?? '') ?>).</p>
 
+<?php if (!empty($dataDansWebroot)): ?>
+  <div class="alertes" role="alert">
+    <p>⚠️ <strong>Fuite de données :</strong> le dossier <code>data/</code> est encore dans le webroot
+    (<code><?= e($dataDir) ?></code>) et ses fichiers JSON sont accessibles en HTTP
+    (testez <code>/lisons/data/livres.json</code>). En production, l'application tente de déplacer
+    automatiquement <code>data/</code> et <code>logs/</code> vers <code>../../lisons-data</code> et
+    <code>../../lisons-logs</code> (hors webroot) — si ce déplacement est impossible (droits insuffisants),
+    déplace-les à la main ou bloquez <code>^/lisons/(data|logs|config|app)/</code> côté nginx/Apache.</p>
+  </div>
+<?php endif; ?>
+
 <div class="stats admin-stats">
   <span class="stat"><strong><?= $stats['users'] ?></strong> compte(s)<?php if ($stats['users_pending']): ?> dont <strong><?= $stats['users_pending'] ?></strong> en attente<?php endif; ?></span>
   <span class="stat"><strong><?= $stats['livres'] ?></strong> livre(s)</span>

@@ -31,9 +31,14 @@ class AdminController
             'fiches' => count($fiches),
             'fiches_publiques' => count(array_filter($fiches, fn ($f) => !empty($f['publique']))),
         ];
+        // Alerte si les données sont encore servies depuis le webroot
+        $paths = $app->config()['paths'];
+        $dataDansWebroot = $paths['data'] === $paths['root'] . '/data' && file_exists($paths['root'] . '/data/livres.json');
         $html = $app->view()->render('admin/index', [
             'user' => $this->auth()->currentUser(),
             'stats' => $stats,
+            'dataDansWebroot' => $dataDansWebroot,
+            'dataDir' => $paths['data'],
             'page' => 'admin',
             'role_labels' => $app->config()['auth']['role_labels'],
         ]);

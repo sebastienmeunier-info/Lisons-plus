@@ -71,18 +71,23 @@ Toutes les URLs deviennent alors `/lisons/?/connexion`, `/lisons/?/livre/…` �
 fonctionnel sans toucher à la conf serveur. Les recherches publiques restent
 `/lisons/?isbn=…`, `/lisons/?auteur=…` (inchangé).
 
-### Protéger les données (URGENT si data/ est dans le webroot)
+### Protéger les données (anti-fuite, automatique)
 
-`data/` et `logs/` ne doivent **jamais** être servis en HTTP (ils contiennent livres,
-utilisateurs + hash de mots de passe, sessions). Sans accès à la conf serveur :
+`data/` et `logs/` ne doivent **jamais** être servis en HTTP (livres, utilisateurs +
+hash de mots de passe, sessions). **En production (PHP-FPM/Apache), l'application règle
+cela toute seule** : au premier chargement, elle déplace `data/*.json`, `data/sessions/`
+et `logs/` vers `../../lisons-data` et `../../lisons-logs` (hors DocumentRoot, que l'app
+soit à la racine ou en sous-dossier du webroot), sans jamais écraser. Un `data/.htaccess`
+« Require all denied » est posé en secours (Apache). En dev local (`php -S`), rien n'est
+ déplacé : `data/` reste dans le projet.
 
-1. Créer `lisons-data/` et `lisons-logs/` **à côté** du dossier de l'app (hors DocumentRoot,
-   ex. `../lisons-data` si l'app est dans `/lisons/`) et les rendre writables par PHP (chmod 777).
-2. Y déplacer les `*.json` de `data/`, le dossier `sessions/`, et le contenu de `logs/`.
-3. L'application les détecte **automatiquement** (voir `config/config.php`) — aucun réglage.
+Vérifier après déploiement : `/lisons/data/livres.json` et `/lisons/logs/app.log`
+doivent répondre **403/404**. L'espace admin affiche une alerte tant que `data/` contient
+encore des données dans le webroot.
 
-Vérifier ensuite : `/lisons/data/livres.json` et `/lisons/logs/app.log` doivent répondre 403/404.
-Si accès à la conf nginx : `location ~ ^/lisons/(data|logs|config|app)/ { deny all; }`.
+En complément (si accès à la conf) : `location ~ ^/lisons/(data|logs|config|app)/ { deny all; }` (nginx)
+ou `RedirectMatch 404 "(^|/)(data|logs|config|app)(/|$)"` (Apache, déjà dans le `.htaccess`).
+Déplacement manuel possible aussi : `LISONS_DATA_DIR` / `LISONS_LOGS_DIR` (variables d'environnement).
 
 ### Protéger les données (recommandé en production)
 
