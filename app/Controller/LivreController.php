@@ -82,6 +82,25 @@ class LivreController
         if ($erreurs) {
             return $this->reponseErreur($req, implode(' ', $erreurs), $isbnSaisi, $livre);
         }
+        // Anti-doublon : même ISBN, ou même titre + même premier auteur, déjà
+        // présent chez cet utilisateur → on renvoie vers l'existant au lieu
+        // de créer un doublon (deux ISBN peuvent désigner la même édition).
+        $titreNorm = mb_strtolower(trim((string) $livre['titre']));
+        $auteurNorm = mb_strtolower(trim((string) ($livre['auteurs'][0] ?? '')));
+        $isbnNorm = (string) ($livre['isbn'] ?? '');
+        $doublon = $app->store('livres')->query(
+            fn ($l) => ($l['user_id'] ?? '') === $user['id']
+                && (
+                    ($isbnNorm !== '' && (string) ($l['isbn'] ?? '') === $isbnNorm)
+                    || ($titreNorm !== '' && $auteurNorm !== ''
+                        && mb_strtolower(trim((string) ($l['titre'] ?? ''))) === $titreNorm
+                        && mb_strtolower(trim((string) ($l['auteurs'][0] ?? ''))) === $auteurNorm)
+                )
+        );
+        if ($doublon) {
+            $existantId = (string) array_key_first($doublon);
+            return Response::redirect(url('/livre/' . $existantId . '?message=' . rawurlencode('Ce livre est déjà dans ta bibliothèque.')));
+        }
         $app->store('livres')->save($id, $livre);
         $cible = '/livre/' . $id . ($flash !== '' ? '?message=' . rawurlencode($flash) : '');
         return Response::redirect(url($cible));
