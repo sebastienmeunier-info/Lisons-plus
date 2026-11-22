@@ -1,4 +1,5 @@
-# Données personnelles (non versionnées)
+# Données personnelles (non versionnées) — sauf les amorces vides suivies
+# (data/*.json poussées avec -f : [] à l'installation, jamais de vraies données)
 data/*.json
 data/sessions/
 data/cache/
