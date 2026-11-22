@@ -4,6 +4,7 @@ data/import-*.json
 uploads/covers/*
 !uploads/covers/.gitkeep
 logs/*.log
+logs/*.txt
 
 # Fichiers locaux
 .config.local.php
