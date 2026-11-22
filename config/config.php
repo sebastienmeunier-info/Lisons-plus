@@ -15,9 +15,12 @@ return [
 
     'paths' => [
         'root'   => $root,
-        'data'   => $root . '/data',
-        'logs'   => $root . '/logs',
-        'uploads'=> $root . '/uploads',
+        // data/ et logs/ contiennent des données personnelles : en production,
+        // les déplacer HORS du webroot via LISONS_DATA_DIR / LISONS_LOGS_DIR
+        // (ex. /home/seb/lisons-data) ou bloquer ^/(data|logs|config|app)/ côté serveur.
+        'data'   => getenv('LISONS_DATA_DIR') ?: $root . '/data',
+        'logs'   => getenv('LISONS_LOGS_DIR') ?: $root . '/logs',
+        'uploads'=> $root . '/uploads', // servi publiquement (couvertures)
         'views'  => $root . '/resources/views',
     ],
 
@@ -41,11 +44,11 @@ return [
      * PHP locales, 3 niveaux hiérarchiques).
      * ===================================================================== */
     'auth' => [
-        'users_file'  => $root . '/data/utilisateurs.json',
-        'password_resets_file' => $root . '/data/reinitialisations.json',
+        'users_file'  => (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/utilisateurs.json',
+        'password_resets_file' => (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/reinitialisations.json',
         // Sessions PHP stockées localement (hébergement mutualisé multi-serveurs :
         // le répertoire par défaut n'est pas partagé entre serveurs).
-        'sessions_path' => getenv('LISONS_SESSIONS_PATH') ?: $root . '/data/sessions',
+        'sessions_path' => getenv('LISONS_SESSIONS_PATH') ?: (getenv('LISONS_DATA_DIR') ?: $root . '/data') . '/sessions',
         'session_key'   => 'lisons_user_id',
         // E-mails promus administrateur / super-administrateur.
         'bootstrap_admin_email' => strtolower((string) (getenv('LISONS_BOOTSTRAP_ADMIN_EMAIL') ?: '')),

@@ -25,6 +25,32 @@ class Request
         return $this->uri;
     }
 
+    /**
+     * Chemin de la requête RELATIF au dossier de l'application
+     * (ex. déploiement en sous-dossier /lisons/ : "/lisons/connexion" -> "/connexion").
+     * Fonctionne à la racine comme en sous-dossier, avec ou sans réécriture.
+     */
+    public function path(): string
+    {
+        $path = parse_url($this->uri, PHP_URL_PATH) ?: '/';
+        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        $dir = rtrim(dirname($script), '/'); // '' à la racine, '/lisons' en sous-dossier
+        if ($dir !== '' && ($path === $dir || str_starts_with($path, $dir . '/'))) {
+            $path = substr($path, strlen($dir));
+        }
+        if ($path === '/index.php') {
+            $path = '/';
+        }
+        return rtrim($path, '/') ?: '/';
+    }
+
+    /** path() + query string (pour les redirections « next »). */
+    public function pathWithQuery(): string
+    {
+        $qs = $_SERVER['QUERY_STRING'] ?? '';
+        return $this->path() . ($qs !== '' ? '?' . $qs : '');
+    }
+
     public function isPost(): bool
     {
         return $this->method === 'POST';

@@ -1,8 +1,9 @@
-# Lisons-plus — réécriture Apache : tout passe par index.php sauf les fichiers existants
+# Lisons-plus — réécriture Apache (fonctionne à la racine ET en sous-dossier :
+# dans un .htaccess, RewriteRule s'applique au chemin relatif au dossier).
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
 
-# Protection des dossiers sensibles
-RedirectMatch 404 ^/(data|logs|config|app)/
+# Protection des dossiers sensibles (chemin complet, couvre aussi les sous-dossiers)
+RedirectMatch 404 "(^|/)(data|logs|config|app)(/|$)"

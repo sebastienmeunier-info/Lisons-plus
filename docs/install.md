@@ -37,6 +37,8 @@ RedirectMatch 404 ^/(data|logs|config|app)/
 
 ### nginx
 
+**À la racine du domaine** :
+
 ```nginx
 root /var/www/html;
 index index.php;
@@ -46,7 +48,34 @@ location / {
 location ~ ^/(data|logs|config|app)/ { deny all; }
 ```
 
-> Sans réécriture, seules les URLs « réelles » (fichiers) répondent : activez-la, ou testez d'abord avec `php -S`.
+**En sous-dossier** (ex. `https://apps.example.tld/lisons/`) — Lisons-plus détecte
+automatiquement le préfixe, mais la conf nginx doit router vers le bon `index.php` :
+
+```nginx
+location /lisons/ {
+    alias /var/www/lisons/;              # dossier contenant index.php (adapter)
+    try_files $uri $uri/ /lisons/index.php?$query_string;
+}
+# OBLIGATOIRE : bloquer l'accès direct aux données (sinon /lisons/data/livres.json est public !)
+location ~ ^/lisons/(data|logs|config|app)/ { deny all; }
+```
+
+> Sans réécriture (`try_files … /index.php`), seules les URLs « réelles » (fichiers) répondent : activez-la, ou testez d'abord avec `php -S`.
+
+### Protéger les données (recommandé en production)
+
+`data/` et `logs/` contiennent des données personnelles. Deux niveaux de protection :
+
+1. **Règle serveur** `deny all` ci-dessus (nginx) / `RedirectMatch 404` du `.htaccess` (Apache).
+2. **Déplacer `data/` et `logs/` hors du webroot** via les variables d'environnement
+   `LISONS_DATA_DIR` et `LISONS_LOGS_DIR` (définies dans le vhost Apache `SetEnv`,
+   le pool PHP-FPM `env[...]`, ou le panel de l'hébergeur), par ex. :
+   ```
+   LISONS_DATA_DIR=/home/seb/lisons-data
+   LISONS_LOGS_DIR=/home/seb/lisons-logs
+   ```
+   Les sessions suivront (`$LISONS_DATA_DIR/sessions`). `uploads/` (couvertures) reste
+   dans le webroot, il est destiné à être public.
 
 ## 3. Configuration (variables d'environnement)
 

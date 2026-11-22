@@ -76,7 +76,7 @@ class App
 
     public function dispatch(Request $request): Response
     {
-        $match = $this->router->match($request->method(), $request->uri());
+        $match = $this->router->match($request->method(), $request->path());
         if (!$match) {
             return Response::html(
                 $this->view->render('erreur', ['code' => 404, 'message' => 'Page introuvable.'], null),
@@ -89,7 +89,7 @@ class App
         if (!empty($options['auth']) || !empty($options['role'])) {
             $user = $this->auth()->currentUser();
             if (!$user) {
-                $next = rawurlencode($request->uri());
+                $next = rawurlencode($request->pathWithQuery());
                 return Response::redirect(View::url('/connexion?next=' . $next));
             }
             if (!empty($options['role']) && !$this->auth()->hasRole($user, $options['role'])) {
