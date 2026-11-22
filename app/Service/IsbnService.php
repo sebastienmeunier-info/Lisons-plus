@@ -67,7 +67,9 @@ class IsbnService
     }
 
     /**
-     * Métadonnées complètes pour un ISBN saisi (10 ou 13).
+     * Métadonnées pour un ISBN saisi (10 ou 13).
+     * Rapide : 2 appels HTTP max (édition + search qui fournit auteurs/sujets
+     * directement, sans appeler chaque fiche auteur), et cache disque 7 jours.
      * @return array|null tableau normalisé ou null si introuvable/invalide
      */
     public function lookup(string $saisie): ?array
@@ -76,82 +78,93 @@ class IsbnService
         if ($isbn === null) {
             return null;
         }
+        $cache = $this->cacheLire($isbn);
+        if ($cache !== null) {
+            return $cache;
+        }
         $base = rtrim($this->config['isbn']['openlibrary_base'], '/');
-        $edition = $this->httpGetJson($base . '/isbn/' . $isbn . '.json');
-        if (!is_array($edition) || isset($edition['error'])) {
-            // Fallback : recherche par ISBN (certaines éditions n'ont pas de fiche /isbn/)
-            $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=title,author_name,first_publish_year,publisher,cover_i,number_of_pages_median,subject');
-            if (!is_array($search) || empty($search['docs'][0])) {
-                return null;
-            }
-            $doc = $search['docs'][0];
-            return $this->normaliserMeta([
+        // UN SEUL appel en priorité : search.json renvoie titre, auteurs,
+        // éditeur, année, pages, sujets, première phrase et couverture.
+        $searchFields = 'title,subtitle,author_name,first_publish_year,publisher,cover_i,number_of_pages_median,subject,first_sentence';
+        $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=' . $searchFields . '&limit=1');
+        $doc = is_array($search) ? ($search['docs'][0] ?? null) : null;
+
+        if (is_array($doc) && !empty($doc['title'])) {
+            $meta = [
                 'isbn' => $isbn,
                 'titre' => $doc['title'] ?? '',
+                'sous_titre' => $doc['subtitle'] ?? null,
                 'auteurs' => $doc['author_name'] ?? [],
-                'annee' => $doc['first_publish_year'] ?? null,
                 'editeur' => $doc['publisher'][0] ?? null,
+                'annee' => $doc['first_publish_year'] ?? null,
                 'pages' => $doc['number_of_pages_median'] ?? null,
+                'description' => $doc['first_sentence'][0] ?? null,
                 'sujets' => array_slice($doc['subject'] ?? [], 0, 10),
                 'couverture_id' => $doc['cover_i'] ?? null,
                 'source' => 'openlibrary-search',
-            ]);
+            ];
+        } else {
+            // Fallback : fiche édition /isbn/ (données riches mais sans auteurs)
+            $edition = $this->httpGetJson($base . '/isbn/' . $isbn . '.json');
+            if (!is_array($edition) || isset($edition['error'])) {
+                return null;
+            }
+            $meta = [
+                'isbn' => $isbn,
+                'isbn_10' => $edition['isbn_10'][0] ?? null,
+                'titre' => $edition['title'] ?? '',
+                'sous_titre' => $edition['subtitle'] ?? null,
+                'auteurs' => [],
+                'editeur' => $edition['publishers'][0] ?? null,
+                'lieu' => $edition['publish_places'][0] ?? null,
+                'annee' => $this->extraireAnnee($edition['publish_date'] ?? null),
+                'pages' => $edition['number_of_pages'] ?? null,
+                'format' => $edition['physical_format'] ?? null,
+                'langue' => $this->extraireLangue($edition['languages'][0] ?? null),
+                'serie' => $edition['series'][0] ?? null,
+                'couverture_id' => $edition['covers'][0] ?? null,
+                'description' => null,
+                'sujets' => [],
+                'source' => 'openlibrary',
+            ];
         }
+        $meta = $this->normaliserMeta($meta);
+        $this->cacheEcrire($isbn, $meta);
+        return $meta;
+    }
 
-        $meta = [
-            'isbn' => $isbn,
-            'isbn_10' => $edition['isbn_10'][0] ?? null,
-            'titre' => $edition['title'] ?? '',
-            'sous_titre' => $edition['subtitle'] ?? null,
-            'auteurs' => [],
-            'editeur' => $edition['publishers'][0] ?? null,
-            'lieu' => $edition['publish_places'][0] ?? null,
-            'annee' => $this->extraireAnnee($edition['publish_date'] ?? null),
-            'pages' => $edition['number_of_pages'] ?? null,
-            'format' => $edition['physical_format'] ?? null,
-            'langue' => $this->extraireLangue($edition['languages'][0] ?? null),
-            'serie' => $edition['series'][0] ?? null,
-            'couverture_id' => $edition['covers'][0] ?? null,
-            'description' => null,
-            'sujets' => [],
-            'source' => 'openlibrary',
-        ];
+    /** Cache disque (7 jours) des métadonnées par ISBN, dans paths.data/cache. */
+    private function cacheFile(string $isbn): string
+    {
+        return rtrim((string) ($this->config['paths']['data'] ?? sys_get_temp_dir()), '/') . '/cache/isbn_' . $isbn . '.json';
+    }
 
-        // Fiche "work" : description + auteurs + sujets
-        $workKey = $edition['works'][0]['key'] ?? null;
-        if ($workKey) {
-            $work = $this->httpGetJson($base . $workKey . '.json');
-            if (is_array($work)) {
-                $desc = $work['description'] ?? null;
-                if (is_array($desc)) {
-                    $desc = $desc['value'] ?? null;
+    private function cacheLire(string $isbn): ?array
+    {
+        try {
+            $f = $this->cacheFile($isbn);
+            if (is_file($f) && filemtime($f) > time() - 7 * 86400) {
+                $data = json_decode((string) file_get_contents($f), true);
+                if (is_array($data) && ($data['isbn'] ?? '') === $isbn) {
+                    return $data;
                 }
-                $meta['description'] = $desc;
-                $meta['sujets'] = array_slice($work['subjects'] ?? [], 0, 10);
-                $auteurs = [];
-                foreach (array_slice($work['authors'] ?? [], 0, 5) as $a) {
-                    $authorKey = $a['author']['key'] ?? null;
-                    if ($authorKey) {
-                        $author = $this->httpGetJson($base . $authorKey . '.json');
-                        if (is_array($author) && !empty($author['name'])) {
-                            $auteurs[] = $author['name'];
-                        }
-                    }
-                }
-                $meta['auteurs'] = $auteurs;
             }
+        } catch (\Throwable $e) {
+            // le cache ne doit jamais faire échouer la recherche
         }
-        // Fallback auteurs via la recherche si la work n'a rien donné
-        if ($meta['auteurs'] === []) {
-            $search = $this->httpGetJson($base . '/search.json?isbn=' . $isbn . '&fields=author_name,first_publish_year');
-            if (is_array($search) && !empty($search['docs'][0]['author_name'])) {
-                $meta['auteurs'] = $search['docs'][0]['author_name'];
+        return null;
+    }
+
+    private function cacheEcrire(string $isbn, array $meta): void
+    {
+        try {
+            $f = $this->cacheFile($isbn);
+            if (!is_dir(dirname($f))) {
+                mkdir(dirname($f), 0775, true);
             }
-            if (empty($meta['annee']) && !empty($search['docs'][0]['first_publish_year'])) {
-                $meta['annee'] = $search['docs'][0]['first_publish_year'];
-            }
+            file_put_contents($f, json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+        } catch (\Throwable $e) {
         }
-        return $this->normaliserMeta($meta);
     }
 
     /** URL de couverture Open Library (taille L) à partir de l'id de couverture. */

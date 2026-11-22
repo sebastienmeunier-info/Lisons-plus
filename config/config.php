@@ -170,7 +170,7 @@ return [
     'isbn' => [
         'openlibrary_base' => 'https://openlibrary.org',
         'covers_base'      => 'https://covers.openlibrary.org/b/id',
-        'timeout'          => 20,
+        'timeout'          => 10,
         'user_agent'       => 'Lisons-plus/1.0 (contact: ' . (getenv('LISONS_ADMIN_EMAIL') ?: 'local') . ')',
     ],
 
