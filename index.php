@@ -39,6 +39,19 @@ $config = require __DIR__ . '/config/config.php';
 $app = App::boot($config);
 $router = $app->router();
 
+// Force la migration immédiate des magasins de données vers les fichiers
+// gardés .php (si data/ est encore dans le webroot, les anciens *.json
+// lisibles sont convertis puis supprimés au premier appel).
+foreach (array_keys($config['data_files']) as $storeName) {
+    $app->store($storeName);
+}
+// Idem pour l'ancien log non protégé (logs/app.log → app.log.php gardé).
+$logsDir = (string) ($config['paths']['logs'] ?? '');
+if ($logsDir !== '' && is_file($logsDir . '/app.log') && !is_file($logsDir . '/app.log.php')) {
+    @file_put_contents($logsDir . '/app.log.php', "<?php exit; ?>\n" . (string) file_get_contents($logsDir . '/app.log'), LOCK_EX);
+    @unlink($logsDir . '/app.log');
+}
+
 $home = new HomeController();
 $livre = new LivreController();
 $fiche = new FicheController();

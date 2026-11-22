@@ -136,7 +136,7 @@ class AuthController
     /**
      * Demande de réinitialisation : un jeton est stocké (hashé) dans
      * data/reinitialisations.json. Sans SMTP configuré, le lien est journalisé
-     * (logs/app.log) et affiché si LISONS_DEBUG=1.
+     * (logs/app.log.php) et affiché si LISONS_DEBUG=1.
      */
     public function forgot(Request $req): Response
     {

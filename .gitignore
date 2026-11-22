@@ -1,18 +1,14 @@
 # Données personnelles (non versionnées) — sauf les amorces vides suivies
-# (data/*.json poussées avec -f : [] à l'installation, jamais de vraies données)
+# (data/*.php gardés « <?php exit; ?> » poussés avec -f : {} à l'installation,
+#  jamais de vraies données ; en production ils sont invisibles via HTTP)
 data/*.json
+data/*.php
 data/sessions/
 data/cache/
 data/import-*.json
 uploads/covers/*
 !uploads/covers/.gitkeep
 logs/*.log
+logs/*.log.php
 logs/*.txt
-
-# Fichiers locaux
-.config.local.php
-*.swp
-.DS_Store
-__pycache__/
-*.pyc
-*.jpg
+data/.gitkeep

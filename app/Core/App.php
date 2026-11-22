@@ -132,8 +132,15 @@ class App
 
     public function log(string $message): void
     {
+        // Fichier .php protégé par une garde PHP (exit en tête) : jamais servi en clair par le
+        // serveur web s'il reste dans le webroot.
+        $file = $this->config['paths']['logs'] . '/app.log.php';
+        if (!file_exists($file)) {
+            @file_put_contents($file, "<?php exit; ?>\n", LOCK_EX);
+            @unlink($this->config['paths']['logs'] . '/app.log'); // ancien log non gardé
+        }
         $line = '[' . date('c') . '] ' . $message . "\n";
-        @file_put_contents($this->config['paths']['logs'] . '/app.log', $line, FILE_APPEND | LOCK_EX);
+        @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
     }
 
     /** URL de base absolue (sans slash final) ; détection auto si config vide. */

@@ -37,7 +37,7 @@ $lisons_migrer = function (string $src, string $dst): void {
     if (!is_dir($src)) {
         return;
     }
-    foreach (glob($src . '/*.json') ?: [] as $f) {
+    foreach (array_merge(glob($src . '/*.json') ?: [], glob($src . '/*.php') ?: []) as $f) {
         $cible = $dst . '/' . basename($f);
         if (!file_exists($cible)) {
             @rename($f, $cible);
@@ -119,17 +119,24 @@ return [
         // data/ et logs/ contiennent des données personnelles : en production,
         // les déplacer HORS du webroot (LISONS_DATA_DIR, ou ../lisons-data détecté
         // auto) ou bloquer ^/(data|logs|config|app)/ côté serveur web.
+        // À défaut (tout reste dans le webroot), les fichiers de données sont
+        // protégés par une garde PHP (exit en tête) + extension .php : servis par nginx, ils
+        // sont exécutés (réponse vide) et non lus.
         'data'   => $dataDir,
         'logs'   => $logsDir,
         'uploads'=> $root . '/uploads', // servi publiquement (couvertures)
         'views'  => $root . '/resources/views',
     ],
 
+    // Fichiers de données : extension .php + garde PHP (exit) écrite en
+    // tête par JsonStore → si le dossier data/ reste dans le webroot (nginx sans
+    // règle deny), un accès direct à data/utilisateurs.php est EXÉCUTÉ (réponse
+    // vide) au lieu d'être servi en clair. Les anciens *.json sont migrés auto.
     'data_files' => [
-        'livres' => 'livres.json',
-        'fiches' => 'fiches.json',
-        'users'  => 'utilisateurs.json',
-        'resets' => 'reinitialisations.json',
+        'livres' => 'livres.php',
+        'fiches' => 'fiches.php',
+        'users'  => 'utilisateurs.php',
+        'resets' => 'reinitialisations.php',
     ],
 
     // Statuts de lecture possibles (clé => libellé)

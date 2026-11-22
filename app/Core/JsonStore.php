@@ -7,6 +7,12 @@ namespace App\Core;
  */
 class JsonStore
 {
+    /**
+     * Garde d'exécution : si le fichier tombe dans un webroot servi par un
+     * serveur qui exécute PHP (.php), toute lecture directe ne renvoie rien.
+     */
+    private const GUARD = '<?php exit; ?>';
+
     private string $file;
 
     public function __construct(string $file)
@@ -16,16 +22,30 @@ class JsonStore
         if (!is_dir($dir)) {
             mkdir($dir, 0775, true);
         }
+        // Protection Apache (inutile sous nginx, sans effet nuisible)
+        @file_put_contents($dir . '/.htaccess', "Require all denied\n");
         if (!file_exists($this->file)) {
-            file_put_contents($this->file, "{}\n", LOCK_EX);
+            // Migration des anciens fichiers *.json non gardés (exposés en clair)
+            $legacy = (string) preg_replace('/\.php$/i', '.json', $file);
+            if ($legacy !== $file && is_file($legacy)) {
+                $raw = (string) file_get_contents($legacy);
+                file_put_contents($this->file, self::GUARD . "\n" . $raw, LOCK_EX);
+                @unlink($legacy); // supprime le fichier lisible par le serveur web
+            } else {
+                file_put_contents($this->file, self::GUARD . "\n{}\n", LOCK_EX);
+            }
         }
     }
 
     /** @return array<string, array> */
     public function all(): array
     {
-        $raw = file_get_contents($this->file);
-        $data = json_decode($raw ?: '{}', true);
+        $raw = (string) file_get_contents($this->file);
+        if (str_starts_with($raw, '<?php')) {
+            $nl = strpos($raw, "\n");
+            $raw = $nl === false ? '' : substr($raw, $nl + 1);
+        }
+        $data = json_decode(trim($raw) ?: '{}', true);
         return is_array($data) ? $data : [];
     }
 
@@ -116,7 +136,7 @@ class JsonStore
         flock($fp, LOCK_EX);
         ftruncate($fp, 0);
         rewind($fp);
-        fwrite($fp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n");
+        fwrite($fp, self::GUARD . "\n" . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n");
         fflush($fp);
         flock($fp, LOCK_UN);
         fclose($fp);
