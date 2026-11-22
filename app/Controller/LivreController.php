@@ -270,6 +270,14 @@ class LivreController
         foreach ($app->store('fiches')->query(fn ($f) => ($f['livre_id'] ?? null) === $params['id']) as $id => $f) {
             $app->store('fiches')->delete($id);
         }
+        // supprime aussi le fichier de couverture local (uploads/covers/…)
+        $couv = trim((string) ($existant['couverture'] ?? ''));
+        if ($couv !== '' && str_starts_with($couv, 'uploads/')) {
+            $path = rtrim((string) $app->config()['paths']['root'], '/') . '/' . ltrim($couv, '/');
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
         return Response::redirect(url('/'));
     }
 
