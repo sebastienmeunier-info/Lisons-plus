@@ -11,15 +11,15 @@
     <?php foreach ($fiches as $f): ?>
       <li>
         <div class="partage-infos">
-          <a href="<?= url('/partage/' . $f['token']) ?>" target="_blank"><strong><?= e($f['titre']) ?></strong></a>
+          <a href="<?= url_partage($f['token']) ?>" target="_blank"><strong><?= e($f['titre']) ?></strong></a>
           <?php if (!empty($livres[$f['livre_id']])): ?>
             <span class="partage-livre"> — <?= e($livres[$f['livre_id']]['titre']) ?> (<?= e(implode(', ', $livres[$f['livre_id']]['auteurs'] ?? [])) ?>)</span>
           <?php endif; ?>
           <span class="note"><?= !empty($f['note']) ? str_repeat('★', (int) $f['note']) : '' ?></span>
         </div>
         <div class="partage-actions">
-          <input type="text" readonly value="<?= url('/partage/' . $f['token']) ?>" class="lien-partage" onclick="this.select()">
-          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url('/partage/' . $f['token']) ?>">Copier</button>
+          <input type="text" readonly value="<?= url_partage($f['token']) ?>" class="lien-partage" onclick="this.select()">
+          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url_partage($f['token']) ?>">Copier</button>
           <a class="bouton secondaire petit" href="<?= url('/fiche/' . $f['id'] . '/edit') ?>">Modifier</a>
         </div>
       </li>

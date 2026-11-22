@@ -165,6 +165,15 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf_token" value="' . e(App::get()->auth()->csrfToken()) . '">';
 }
 
+/**
+ * URL publique d'une fiche de lecture : /?partage={token}
+ * (query string sur la racine — fonctionne avec OU sans réécriture serveur).
+ */
+function url_partage(string $token): string
+{
+    return url('/?partage=' . rawurlencode($token));
+}
+
 /** Libellé d'un rôle. */
 function role_label(string $role): string
 {

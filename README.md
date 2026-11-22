@@ -5,7 +5,7 @@ Lisons-plus est une application web pour **inventorier ses lectures** et **parta
 - **Pas de base de données** : stockage pérenne en fichiers JSON (`data/`), comme Plantons-plus — auto-hébergeable sur n'importe quel hébergement PHP, `index.php` à la racine.
 - **Comptes utilisateurs** (calqués sur Plantons-plus) : inscription, connexion, mot de passe oublié, sessions PHP sécurisées, jetons CSRF, et **3 rôles hiérarchiques** : `contributeur` < `administrateur` < `super_administrateur` (le premier inscrit est super-administrateur), avec espace admin de gestion des utilisateurs et modération des fiches.
 - Chaque livre est décrit par ses **métadonnées ISBN** (recherche automatique via [Open Library](https://openlibrary.org) : titre, auteur, éditeur, année, pages, couverture, description) **plus vos informations personnelles** : statut de lecture, note sur 5, commentaire, étiquettes, date de lecture.
-- Des **fiches de lecture** (texte mis en forme, citations, note) par livre, publiables individuellement par lien (`/partage/{token}`).
+- Des **fiches de lecture** (texte mis en forme, citations, note) par livre, publiables individuellement par lien (`/?partage={token}`).
 - **Partage par champ** : les champs d'un livre génèrent des liens publics qui agrègent toutes les fiches publiées correspondantes : `lisons-plus.example/?isbn=9782070360024`, `?auteur=zola`, `?tag=philosophie`, `?editeur=…`, `?statut=lu`, `?q=…`.
 - Import possible d'une **bibliothèque Calibre** existante.
 
@@ -33,7 +33,7 @@ Voir [docs/install.md](docs/install.md) : `index.php` à la racine du DocumentRo
 2. **Ajouter un livre** : saisir son ISBN, ou **scanner le code-barres EAN au dos du livre avec la caméra** (BarcodeDetector natif, sinon ZXing embarqué localement dans `public/js/vendor/` ; fonctionne en HTTPS ou sur `localhost`) → pré-remplissage automatique via Open Library + couverture téléchargée localement. Compléter statut, note, commentaire, étiquettes.
 3. **Statistiques de lecture** (`/stats`) : répartition par statut (donut SVG), notes, pages lues, lectures par mois sur 12 mois, top auteurs lus et étiquettes — calculées à la volée depuis tes livres.
 4. **Ma bibliothèque** (`/`, connecté) : grille personnelle avec recherche, filtres (statut, étiquette) et tris. Chaque livre n'est visible que par son propriétaire (et les admins).
-5. **Fiche de lecture** : depuis un livre, rédiger une fiche (mini-markdown : `**gras**`, `*italique*`, `# titre`, `> citation`, `- liste`, `[texte](https://…)`), puis **Publier / partager** → lien `/partage/{token}` + **liens par champ** (`/?isbn=…`, `/?auteur=…`, `/?tag=…`) copiables depuis la page du livre.
+5. **Fiche de lecture** : depuis un livre, rédiger une fiche (mini-markdown : `**gras**`, `*italique*`, `# titre`, `> citation`, `- liste`, `[texte](https://…)`), puis **Publier / partager** → lien `/?partage={token}` + **liens par champ** (`/?isbn=…`, `/?auteur=…`, `/?tag=…`) copiables depuis la page du livre.
 6. **Côté visiteur** (déconnecté), `/` est une page publique : dernières fiches partagées, et `/?isbn=…&auteur=…&tag=…` listent les livres et fiches publiques correspondants.
 7. **Espace admin** (`/admin`, administrateur+) : statistiques globales, gestion des utilisateurs (rôles hiérarchiques, validation des inscriptions, suppression), modération des fiches publiques.
 8. **Import Calibre** (`/import`) :

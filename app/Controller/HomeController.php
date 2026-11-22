@@ -18,6 +18,11 @@ class HomeController
     public function index(Request $req): Response
     {
         $app = App::get();
+        // Partage d'une fiche par query string : /?partage={token} (public)
+        $params = query_params($req);
+        if (!empty($params['partage'])) {
+            return (new FicheController())->publique($req, ['token' => (string) $params['partage']]);
+        }
         $user = $app->auth()->currentUser();
         if ($user) {
             return $this->prive($req, $user);

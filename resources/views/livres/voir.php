@@ -71,7 +71,7 @@
         <span class="fiche-badges">
           <?php if (!empty($f['note'])): ?><span class="note"><?= str_repeat('★', (int) $f['note']) ?><?= str_repeat('☆', 5 - (int) $f['note']) ?></span><?php endif; ?>
           <?php if (!empty($f['publique']) && !empty($f['token'])): ?>
-            <a class="badge public" href="<?= url('/partage/' . $f['token']) ?>" target="_blank" title="Ouvrir la page publique">🌐 partagée</a>
+            <a class="badge public" href="<?= url_partage($f['token']) ?>" target="_blank" title="Ouvrir la page publique">🌐 partagée</a>
           <?php else: ?>
             <span class="badge prive" title="Visible seulement par toi">🔒 privée</span>
           <?php endif; ?>
@@ -92,7 +92,7 @@
           <button class="bouton secondaire petit" type="submit"><?= !empty($f['publique']) ? 'Rendre privée' : 'Publier / partager' ?></button>
         </form>
         <?php if (!empty($f['publique']) && !empty($f['token'])): ?>
-          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url('/partage/' . $f['token']) ?>">Copier le lien fiche</button>
+          <button class="bouton secondaire petit copier-lien" type="button" data-lien="<?= url_partage($f['token']) ?>">Copier le lien fiche</button>
         <?php endif; ?>
         <form method="post" action="<?= url('/fiche/' . $f['id'] . '/supprimer') ?>" onsubmit="return confirm('Supprimer cette fiche ?');">
           <?= csrf_field() ?>

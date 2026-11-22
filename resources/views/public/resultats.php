@@ -57,7 +57,7 @@
     <?php foreach ($fiches as $f): ?>
       <?php $livre = $livres[$f['livre_id'] ?? ''] ?? null; $auteur = $users[$f['user_id'] ?? ''] ?? null; ?>
       <article class="fiche-publique-carte">
-        <a href="<?= url('/partage/' . $f['token']) ?>">
+        <a href="<?= url_partage($f['token']) ?>">
           <h3><?= e($f['titre']) ?></h3>
           <?php if ($livre): ?><p class="fiche-livre">sur <strong><?= e($livre['titre']) ?></strong> de <?= e(implode(', ', $livre['auteurs'] ?? [])) ?></p><?php endif; ?>
           <p class="fiche-meta">par <?= e(user_display($auteur)) ?> · <?= e(date_fr(substr($f['date_creation'] ?? '', 0, 10))) ?>

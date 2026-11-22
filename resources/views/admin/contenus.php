@@ -12,7 +12,7 @@
     <tr>
       <td>
         <?php if (!empty($f['publique']) && !empty($f['token'])): ?>
-          <a href="<?= url('/partage/' . $f['token']) ?>" target="_blank"><strong><?= e($f['titre']) ?></strong></a>
+          <a href="<?= url_partage($f['token']) ?>" target="_blank"><strong><?= e($f['titre']) ?></strong></a>
         <?php else: ?>
           <strong><?= e($f['titre']) ?></strong>
         <?php endif; ?>
