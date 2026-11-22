@@ -19,7 +19,7 @@
     <?php if ($user): ?>
       <span class="user-menu">Bonjour <?= e($user['prenom'] ?? '') ?></span>
       <a class="menu-button<?= ($page ?? '') === 'accueil' ? ' menu-current' : '' ?>" href="<?= url('/') ?>">Ma bibliothèque</a>
-      <a class="menu-button<?= ($page ?? '') === 'nouveau' ? ' menu-current' : '' ?>" href="<?= url('/livres/nouveau') ?>">+ Ajouter</a>
+      <a class="menu-button<?= ($page ?? '') === 'nouveau' ? ' menu-current' : '' ?>" href="<?= url('/livres/nouveau') ?>">Ajouter un livre</a>
       <a class="menu-button<?= ($page ?? '') === 'partages' ? ' menu-current' : '' ?>" href="<?= url('/partages') ?>">Fiches partagées</a>
       <a class="menu-button<?= ($page ?? '') === 'explorer' ? ' menu-current' : '' ?>" href="<?= url('/partage') ?>">Explorer les fiches</a>
       <a class="menu-button<?= ($page ?? '') === 'stats' ? ' menu-current' : '' ?>" href="<?= url('/stats') ?>">📊 Stats</a>
