@@ -65,9 +65,90 @@ class AdminController
             'erreurs' => [],
             'role_labels' => $app->config()['auth']['role_labels'],
             'roles' => $app->config()['auth']['roles'],
-            'page' => 'admin',
+            'page' => 'admin_users',
         ]);
         return Response::html($html);
+    }
+
+    /** GET /admin/utilisateurs/{id}/edit : formulaire d'édition du profil. */
+    public function editUser(Request $req, array $params): Response
+    {
+        $app = App::get();
+        $moi = $this->auth()->currentUser();
+        $target = $app->store('users')->find((string) $params['id']);
+        if (!$target || !$this->auth()->mayEditUser($moi, $target)) {
+            return Response::html($app->view()->render('erreur', ['code' => 403, 'message' => 'Édition non autorisée.'], null), 403);
+        }
+        $html = $app->view()->render('admin/user_edit', [
+            'user' => $moi,
+            'target' => $target,
+            'csrfToken' => $this->auth()->csrfToken(),
+            'erreurs' => [],
+            'role_labels' => $app->config()['auth']['role_labels'],
+            'roles' => $app->config()['auth']['roles'],
+            'auth' => $this->auth(),
+            'page' => 'admin_users',
+        ]);
+        return Response::html($html);
+    }
+
+    /** POST /admin/utilisateurs/{id}/maj : enregistre profil + rôle. */
+    public function updateUser(Request $req, array $params): Response
+    {
+        $app = App::get();
+        $moi = $this->auth()->currentUser();
+        $target = $app->store('users')->find((string) $params['id']);
+        if (!$target || !$this->auth()->mayEditUser($moi, $target)) {
+            return Response::html($app->view()->render('erreur', ['code' => 403, 'message' => 'Édition non autorisée.'], null), 403);
+        }
+        $erreurs = [];
+        try {
+            $prenom = \mb_substr(trim((string) $req->input('prenom')), 0, 80);
+            $nom = \mb_substr(trim((string) $req->input('nom')), 0, 80);
+            $email = \mb_strtolower(trim((string) $req->input('email')));
+            $role = (string) $req->input('role', $target['role'] ?? 'contributeur');
+            if ($prenom === '' || $nom === '') {
+                throw new \InvalidArgumentException('Prénom et nom obligatoires.');
+            }
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                throw new \InvalidArgumentException('Adresse e-mail invalide.');
+            }
+            $existant = $this->auth()->findByEmail($email);
+            if ($existant && $existant['id'] !== $target['id']) {
+                throw new \InvalidArgumentException('Cette adresse e-mail est déjà utilisée par un autre compte.');
+            }
+            if ($role !== ($target['role'] ?? '') && !$this->auth()->mayChangeRole($moi, $target, $role)) {
+                throw new \InvalidArgumentException('Ce changement de rôle n’est pas autorisé.');
+            }
+            $app->store('users')->save($target['id'], array_merge($target, [
+                'prenom' => $prenom,
+                'nom' => $nom,
+                'email' => $email,
+                'role' => $role,
+                'partage_par_defaut' => !empty($req->input('partage_par_defaut')),
+                'updated_at' => date(DATE_ATOM),
+            ]));
+            return Response::redirect(View::url('/admin/utilisateurs?message=' . rawurlencode('Profil mis à jour.')));
+        } catch (\InvalidArgumentException $e) {
+            $erreurs[] = $e->getMessage();
+        }
+        $html = $app->view()->render('admin/user_edit', [
+            'user' => $moi,
+            'target' => array_merge($target, [
+                'prenom' => (string) $req->input('prenom', $target['prenom'] ?? ''),
+                'nom' => (string) $req->input('nom', $target['nom'] ?? ''),
+                'email' => (string) $req->input('email', $target['email'] ?? ''),
+                'role' => (string) $req->input('role', $target['role'] ?? 'contributeur'),
+                'partage_par_defaut' => !empty($req->input('partage_par_defaut', $target['partage_par_defaut'] ?? false)),
+            ]),
+            'csrfToken' => $this->auth()->csrfToken(),
+            'erreurs' => $erreurs,
+            'role_labels' => $app->config()['auth']['role_labels'],
+            'roles' => $app->config()['auth']['roles'],
+            'auth' => $this->auth(),
+            'page' => 'admin_users',
+        ]);
+        return Response::html($html, 422);
     }
 
     public function changeRole(Request $req): Response

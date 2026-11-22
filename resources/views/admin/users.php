@@ -36,6 +36,9 @@
       </td>
       <td><?= e(date_fr(substr($u['created_at'] ?? '', 0, 10))) ?></td>
       <td>
+        <?php if ($auth->mayEditUser($user, $u)): ?>
+          <a class="bouton secondaire petit" href="<?= url('/admin/utilisateurs/' . $u['id'] . '/edit') ?>">✏️ Modifier</a>
+        <?php endif; ?>
         <?php if ($auth->mayDeleteUser($user, $u) && $u['id'] !== $user['id']): ?>
           <form method="post" action="<?= url('/admin/utilisateurs/supprimer') ?>" class="form-inline" onsubmit="return confirm('Supprimer ce compte ?');">
             <?= csrf_field() ?>

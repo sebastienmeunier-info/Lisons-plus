@@ -105,6 +105,8 @@ $router->post('/mon-compte/mot-de-passe', $account->updatePassword(...), 'compte
 // ----- Administration (administrateur et super_administrateur) -----
 $router->get('/admin', $admin->index(...), 'admin', $ADMIN);
 $router->get('/admin/utilisateurs', $admin->users(...), 'admin_users', $ADMIN);
+$router->get('/admin/utilisateurs/{id}/edit', $admin->editUser(...), 'admin_user_edit', $ADMIN);
+$router->post('/admin/utilisateurs/{id}/maj', $admin->updateUser(...), 'admin_user_maj', $ADMIN);
 $router->post('/admin/utilisateurs/role', $admin->changeRole(...), 'admin_role', $ADMIN);
 $router->post('/admin/utilisateurs/approuver', $admin->approve(...), 'admin_approuver', $ADMIN);
 $router->post('/admin/utilisateurs/supprimer', $admin->deleteUser(...), 'admin_suppr', $ADMIN);

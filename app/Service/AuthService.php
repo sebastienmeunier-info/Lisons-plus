@@ -125,6 +125,12 @@ class AuthService
         return false;
     }
 
+    /** Règles d'édition de profil par un admin (mêmes garde-fous que la suppression). */
+    public function mayEditUser(array $actor, array $target): bool
+    {
+        return $this->mayDeleteUser($actor, $target);
+    }
+
     /** Règles de suppression (un super_administrateur ne peut pas être supprimé). */
     public function mayDeleteUser(array $actor, array $target): bool
     {

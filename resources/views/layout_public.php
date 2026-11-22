@@ -29,7 +29,8 @@
       <a class="menu-button" href="<?= url('/import') ?>">Import</a>
       <a class="menu-button" href="<?= url('/mon-compte') ?>">Mon compte</a>
       <?php if ($auth->hasRole($user, 'administrateur')): ?>
-        <a class="menu-button menu-admin" href="<?= url('/admin') ?>">⚙ Admin</a>
+        <a class="menu-button menu-admin<?= ($page ?? '') === 'admin_users' ? ' menu-current' : '' ?>" href="<?= url('/admin/utilisateurs') ?>">👥 Utilisateurs</a>
+        <a class="menu-button menu-admin<?= ($page ?? '') === 'admin' ? ' menu-current' : '' ?>" href="<?= url('/admin') ?>">⚙ Admin</a>
       <?php endif; ?>
       <form class="logout-form" method="post" action="<?= url('/deconnexion') ?>"><?= csrf_field() ?><button class="menu-button menu-logout" type="submit">Déconnexion</button></form>
     <?php else: ?>
