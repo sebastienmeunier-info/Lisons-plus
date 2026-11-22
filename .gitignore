@@ -12,3 +12,4 @@ logs/*.log
 logs/*.log.php
 logs/*.txt
 data/.gitkeep
+__pycache__/
