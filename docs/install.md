@@ -67,9 +67,12 @@ location ~ ^/lisons/(data|logs|config|app)/ { deny all; }
 Si nginx/Apache ne fait pas de réécriture vers `index.php` (les URLs propres
 `/lisons/connexion` renvoient une 404 du serveur web), activez le **mode query-string** :
 déposer un fichier `config/url_mode` contenant `qs` (ou variable `LISONS_URL_MODE=qs`).
+**Ce fichier est commité par défaut** dans le dépôt (`config/url_mode` = `qs`) : un upload
+FTP manuel suffit donc, sans toucher à la conf serveur. Supprimez-le si votre serveur
+fait de la réécriture (les URLs redeviennent alors `/lisons/connexion`, `/lisons/livre/…`).
 Toutes les URLs deviennent alors `/lisons/?/connexion`, `/lisons/?/livre/…` — 100 %
 fonctionnel sans toucher à la conf serveur. Les recherches publiques restent
-`/lisons/?isbn=…`, `/lisons/?auteur=…` (inchangé).
+`/lisons/?isbn=…`, `/lisons/?auteur=…`, `/lisons/?partage=…` (inchangé).
 
 ### Protéger les données (anti-fuite, automatique)
 

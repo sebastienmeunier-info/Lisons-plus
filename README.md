@@ -26,7 +26,7 @@ php -S 127.0.0.1:8080 dev-router.php
 
 ## Installation sur un hébergement web (Apache/nginx)
 
-Voir [docs/install.md](docs/install.md) : `index.php` à la racine du DocumentRoot, réécriture d'URL (`mod_rewrite` + `AllowOverride All`, ou `try_files … /index.php` sous nginx), blocage de `data/`, `logs/`, `config/`, `app/`.
+Voir [docs/install.md](docs/install.md) : `index.php` à la racine du DocumentRoot. Le dépôt inclut `config/url_mode` = `qs` : sans aucune réécriture serveur (nginx/FTP seul), toutes les URLs passent par la query string (`/lisons/?/connexion`) et fonctionnent telles quelles — supprimez ce fichier si vous activez la réécriture (`mod_rewrite` / `try_files … /index.php`). Bloquez `data/`, `logs/`, `config/`, `app/` en HTTP.
 
 ## Utilisation
 
